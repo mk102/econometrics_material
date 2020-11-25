@@ -1,0 +1,605 @@
+---
+title: "誤差項の系列相関"
+author: "川上 幹男"
+date: "2020/11/13"
+header_includes:
+- \usepackage{bm}
+output:
+  pdf_document: 
+    latex_engine: lualatex 
+    toc: true
+    
+documentclass: ltjsarticle
+---
+
+## 1階の自己回帰過程AR(1)
+重回帰モデル
+
+\begin{align*}
+\vec{y}=\boldsymbol{X}\vec{\beta}+\vec{u}　\tag{1}
+\end{align*}
+
+において，誤差項$u_{t}$が1階の自己回帰過程(autoregressive process of order)，AR(1)に従う
+
+\begin{align*}
+u_{t}=\rho u_{t-1}+\epsilon_{t} \tag{2} \\
+|\rho|<1 \\
+\epsilon_{t}\sim N(0, \sigma^{2}_{\epsilon})
+\end{align*}
+
+式(2)より，
+
+\begin{align*}
+u_t=\sum_{i=0}^{\infty}\rho^{i}\epsilon_{t-i} \tag{3}
+\end{align*}
+
+が得られるから，式(3)を用いて
+
+\begin{align*}
+E(u_t)&=\sum_{i=0}^{\infty}\rho^{i}E(\epsilon_{t-i})=0 \tag{4} \\
+E(u_{t}^{2})&=E(\sum_{i=0}^{\infty}\rho^{i}\epsilon_{t-i})^{2}=\sum_{i=0}^{\infty}\sum_{j=0}^{\infty}\rho^{i}\rho^{j}E(\epsilon_{t-i}\epsilon_{t-j}) \\
+&=\sum_{i=0}^{\infty}\rho^{2i}E(\epsilon^{2}_{t-i})+\underset{i\neq j}{\sum\sum}\rho^{i}\rho^{j}E(\epsilon_{t-i}\epsilon_{t-j}) \\
+&=\sigma^{2}_{\epsilon}(1+\rho^{2}+\rho^{4}+\cdots) \\
+&=\frac{\sigma^{2}_{\epsilon}}{1-\rho^{2}}
+\end{align*}
+
+が得られる．上式の3行目から4行目への変換には，以下で示す無限等比級数和を使用．
+
+\begin{align*}
+S_n&=(1+\rho^{2}+\rho^{4}+\cdots+\rho^{2n})\\
+\rho^{2}S_n&=(\rho^{2}+\rho^{4}+\cdots+\rho^{2n}+\rho^{2n+2})\\
+S_n-\rho^{2}S_n&=1-\rho^{2n+2}\\
+S_n&=\frac{1-\rho^{2n+2}}{1-\rho^{2}}\underset{n\longrightarrow \infty}{\longrightarrow}\frac{1}{1-\rho^{2}}
+\end{align*}
+
+$E(u_{t}^{2})=\sigma^{2}_{u}$とおくと
+
+\begin{align*}
+\sigma^{2}_{u}=\frac{1}{1-\rho^{2}} \tag{5}
+\end{align*}
+
+である．共分散は
+
+\begin{align*}
+cov(u_t, u_{t-s})=\\
+&=E(u_tu_{t-s})\\
+&=E[(\epsilon_{t}+\rho\epsilon_{t-1}+\rho^{2}\epsilon_{t-2}+\cdots)(\epsilon_{t-s}+\rho\epsilon_{t-s-1}+\rho^{2}\epsilon_{t-s-2}+\cdots)]\\
+&=\rho^{s}\sigma^{2}_{\epsilon}(1+\rho^{2}+\rho^{4}+\cdots)\\
+&=\frac{\rho^{s}\sigma^{2}_{\epsilon}}{1-\rho^{2}}=\rho^{s}\sigma^{2}_{u} \tag{6}
+\end{align*}
+
+となる．式(6)で次の点に注目する．
+
+\begin{description}
+  \item[(1)] $cov(u_t, u_{t-s})$の値は，2つの誤差項$u_t$と$u_{t-s}$の時間間隔$s$が大きくなれば，幾何級数的に小さくなる．
+  \item[(2)] $cov(u_t, u_{t-s})$は時間間隔$s$のみに依存し，$t$と独立である．例えば，$E(u_tu_{t-1})=E(u_{t-1}u_{t-2})=\cdots=E(u_{t-s}u_{t-s-1})=\rho\sigma^{2}_{u}$
+\end{description}
+
+式(4)，(5)，(6)は，$u_t$の期待値，分散，共分散が$t$とは独立であることを示している．このような$u_t$は(弱)定常過程に従うといわれる．
+
+## 誤差項が系列相関をもつ場合のOLSE
+誤差項がAR(1)に従っている時，通常のOLSを適用してパラメータ推定した時の問題および特徴をまとめる．
+
+\begin{description}
+  \item[(1)] $E(\hat{\beta})=\beta$は成り立つ\\
+  $\hat{\beta}=\beta+(X{'}X)^{-1}X{'}u$より，不偏性の証明に系列相関は影響しない．
+  \item[(2)] $\hat{\beta}$は$\beta$のBLUEではない\\
+  自己相関なしの仮定がくずれているから，最良線形不偏推定量の"最良"を満たさないという意味($?$)
+  \item[(3)] $\hat{\beta}$の共分散行列は次式で与えられる\\
+\end{description}
+
+\begin{align*}
+  var(\hat{\beta})=\sigma^{2}_{u}(X^{'}X)^{-1}X{'}\Omega X(X^{'}X)^{-1} \tag{7}
+\end{align*}
+
+ここで
+
+\begin{align*}
+  E(uu{'})=\sigma^{2}_{u}\Omega \tag{8}
+\end{align*}
+
+であり，$u\sim AR(1)$の時，$\Omega$は，式(5)，（6）より
+
+\begin{align*}
+  E(uu{'})=\sigma^{2}_{u}\Omega=\frac{\sigma^{2}_{\epsilon}}{1-\rho^{2}} \tag{9}
+  \begin{bmatrix}
+  1 & \rho & \rho^{2} & \cdots & \rho^{n-1} \\
+  \rho & 1 & \rho & \cdots & \rho^{n-2} \\
+  \vdots & \vdots & \vdots &&\vdots \\
+  \rho^{n-1} & \rho^{n-2} & \rho^{n-3} & \cdots & 1
+  \end{bmatrix}
+\end{align*}
+
+式(7)の証明 \
+
+\begin{align*}
+var(\hat{\beta})&=E[(\hat{\beta}-\beta)(\hat{\beta}-\beta)^{'}] \\
+&=E[(X^{'}X)^{-1}X^{'}uu^{'}X(X^{'}X)^{-1}] \\
+&=(X^{'}X)^{-1}X^{'}E[uu^{'}]X(X^{'}X)^{-1} \\
+&=\sigma^{2}_{u}(X^{'}X)^{-1}X{'}\Omega X(X^{'}X)^{-1}
+\end{align*}
+
+上式，3行目から4行目の変形には式(8)を使用．
+$u$の共分散行列が式(8)の時，OLSE$\hat{\beta}$の真の共分散行列は式(7)である．しかし実際は，$E(uu{'})=\sigma^{2}_{u}I$が成立と仮定しているため，
+\begin{align*}
+  V(\hat{\beta})=\sigma^{2}_{u}(X^{'}X)^{-1}
+\end{align*}
+を想定している．このとき以下で述べるような問題が生じる．\
+OLSE$\hat{\beta}$の分散を考える．
+
+\begin{align*}
+V(\hat{\beta})&=E(\hat{\beta}-\beta)^{2}=E\left\{ 
+\frac{\sum(X_i-\overline{X})u_i}{\sum(X_i-\overline{X})^{2}}
+\right\}^{2} \\
+&=\frac{1}{\{\sum(X_i-\overline{X})^{2}\}^{2}}E\{\sum(X_i-\overline{X})u_i\}^{2} \tag{10}
+\end{align*}
+
+式(10)の分子を展開すると
+\begin{align*}
+\{\sum(X_i-\overline{X})u_i\}^{2}&=\sum_{i=1}^{n}(X_i-\overline{X})^{2}u_{i}^{2}+\underset{i\neq j}{\sum\sum}(X_i-\overline{X})(X_j-\overline{X})u_iu_j \tag{11}
+\end{align*}
+
+式(11)右辺の第1項で均一分散の仮定がみたされていれば
+\begin{align*}
+E\{\sum_{i=1}^{n}(X_i-\overline{X})^{2}u_{i}^{2}\}&=\sum(X_i-\overline{X})^{2}E(u_i^2)=\sigma^2\sum(X_i-\overline{X})^{2} \tag{12}
+\end{align*}
+
+式(11)右辺の第2項で系列相関なしの仮定がみたされていれば
+\begin{align*}
+E\{\underset{i\neq j}{\sum\sum}(X_i-\overline{X})(X_j-\overline{X})u_iu_j\}&=\underset{i\neq j}{\sum\sum}(X_i-\overline{X})(X_j-\overline{X})E(u_iu_j)=0 \tag{13}
+\end{align*}
+
+今回は，均一分散の仮定OK，系列相関なしの仮定NGを想定．\
+
+このケースの分散を$\sigma_{\hat{\beta}}^{+2}$とおくと式(10)と式(11),(12)より
+
+\begin{align*}
+\sigma_{\hat{\beta}}^{+2}&=\frac{\sigma^2}{\sum(X_i-\overline{X})^{2}}+\frac{\underset{i\neq j}{\sum\sum}(X_i-\overline{X})(X_j-\overline{X})\sigma_{ij}}{\{\sum(X_i-\overline{X})^{2}\}^{2}} \tag{14}
+\end{align*}
+
+もし，式(14)の右辺第2項が正の相関を持つ時，通常のOLSEは，系列相関なし，均一分散を満たすOLSEの不偏推定量と比較して分散が大きくなるためBLUEではない推定量が求まる問題を引き起こす．
+
+## 自己相関AR(1)の検定
+$u_t$がAR(1)に従うと仮定した時，
+
+\begin{align*}
+H_0&:\rho=0 \\
+H_1&:\rho>0\ (あるいは\rho<0あるいは\rho=0)
+\end{align*}
+
+の検定には，ダービン・ワトソン比
+
+\begin{align*}
+DW&=\frac{\sum_{t=2}^{n}(e_t-e_{t-1})^{2}}{\sum_{t=1}^{n}e_{t}^2} \tag{15}
+\end{align*}
+
+が用いられる．ここで$e_t$はOLSの残差．\
+
+DWによる検定は，説明変数の観測値に依存しない下限分布，上限分布のそれぞれ左片側臨界点$d_l$，$d_u$を用いて
+
+\begin{align*}
+H_0&:\rho=0 \\
+H_1&:\rho>0
+\end{align*}
+
+のとき
+
+\begin{align*}
+DW&<d_lのときH_0棄却 \\
+d_l&\leq DW\leq d_uのとき結論保留 \\
+DW &> d_uのときH_0棄却しない
+\end{align*}
+
+という検定方式となる．また，
+
+\begin{align*}
+H_0&:\rho=0 \\
+H_1&:\rho<0
+\end{align*}
+
+のとき
+
+\begin{align*}
+DW&>4-d_lのときH_0棄却 \\
+4-d_u&\leq DW\leq 4-d_lのとき結論保留 \\
+DW &< 4-d_uのときH_0棄却しない
+\end{align*}
+
+$d_l$，$d_u$の値は$n$，$k^{'}$(定数項を除く説明変数の数)および検定の有意水準に依存．\
+
+DWの問題点
+\begin{itemize}
+  \item 結論保留領域をもつ
+  \item 説明変数に被説明変数の1期前が含まれている時，漸近的なDWの値は2の方向に偏る\\
+  \rightarrow mテスト Durbin[1970]\\
+  $$
+  e_t=\alpha_1+\alpha_2X_t+\alpha_3X_{t-1}+\alpha_4e_{t-1}+v_t
+  $$
+  \ \ において$H_0:\alpha_4=0$を通常のt検定に基づいて行う方法
+\end{itemize}
+
+
+
+## GLSによるパラメータ推定
+誤差項$u$がAR(1)に従う時，通常の最小2乗推定量$\hat{\beta}$は，不偏推定量であるがBLUEではない．そこで，もっと良い特性をもる推定量を求める．\
+
+$\Omega$を正定値対称行列とすると付録の正定値対称行列のの直交分解証明より
+
+$$
+\Omega^{-1}=P^{'}P
+$$
+と非特異行列$P$に分解できる．この$P$を
+
+$$
+y=X\beta+u
+$$
+の両辺に左からかけると
+$$
+Py=PX\beta+Pu \tag{16}
+$$
+となる．式(16)の誤差項の期待値と分散を求めると
+$$
+E(Pu)=PE(u)=0
+$$
+\begin{align*}
+var(Pu)&=E[Pu(Pu)^{'}]=PE(uu^{'})P^{'} \\
+&=P(\sigma^{2}\Omega)P^{'}=\sigma^{2}P\Omega P^{'} \\
+&=\sigma^{2}P(\Omega^{-1})^{-1}P^{'}=\sigma^{2}P(P^{'}P)^{-1}P^{'}\\
+&=\sigma^{2}P(P)^{-1}(P^{'})^{-1}P^{'} \\
+&=\sigma^{2}I
+\end{align*}
+
+上式3行目から4行目の変換には正則行列の積の逆行列性質を使用した．$Pu$は期待値0，自己相関なし，均一分散という古典的線形回帰モデルの誤差項の仮定を満たしている．従って，$Py$を被説明変数，$PX$を説明変数として式(16)に通常の最小2乗法を適用して得られる$\beta$の推定量を$\tilde{\beta}$とすれば，$\tilde{\beta}$はBLUEとなる．
+
+\begin{align*}
+\tilde{\beta}&=[(PX)^{'}(PX)]^{-1}(PX)^{'}Py=(X^{'}P^{'}PX)^{-1}X^{'}P^{'}Py \\
+&=(X^{'}\Omega^{-1}X)^{-1}X^{'}\Omega^{-1}y
+\end{align*}
+
+は$\beta$の一般化最小2乗推定量(GLSE)と呼ばれる．\
+
+$u$がAR(1)のとき共分散行列は式(9)である．この時，
+
+\begin{align*}
+  \Omega^{-1}=\frac{1}{1-\rho^{2}} \tag{17}
+  \begin{bmatrix}
+  1 & -\rho & 0 & \cdots & 0 & 0 & 0 \\
+  -\rho & 1+\rho^{2} & -\rho & \cdots & 0 & 0 & 0 \\
+  0 & -\rho & 1+\rho^{2} & \cdots & 0 & 0 & 0 \\
+  \vdots & \vdots & \vdots & & \vdots & \vdots & \vdots \\
+  0 & 0 & 0 & \cdots & -\rho & 1+\rho^{2} & -\rho \\
+  0 & 0 & 0 & \cdots & 0 & -\rho & 1
+  \end{bmatrix}
+\end{align*}
+
+となり\
+
+\begin{align*}
+  P= \tag{18}
+  \begin{bmatrix}
+  \sqrt{1-\rho^{2}} & 0 & 0 & \cdots & 0 & 0 \\
+  -\rho & 1 & 0 & \cdots & 0 & 0 \\
+  0 & -\rho & 1 & \cdots & 0 & 0 \\
+  \vdots & \vdots & \vdots & & \vdots & \vdots \\
+  0 & 0 & 0 & \cdots & 0 & -\rho & 1
+  \end{bmatrix}
+\end{align*}
+
+とすれば，
+
+$$
+P^{'}P=(1-\rho^{2})\Omega^{-1} \tag{19}
+$$
+の関係がある．従って$\beta$のGLSEは
+
+\begin{align*}
+\tilde{\beta}&=(X^{'}\Omega^{-1}X)^{-1}X^{'}\Omega^{-1}y \\
+&=((1-\rho^{2})^{-1}X^{'}P^{'}PX)^{-1}X^{'}(1-\rho^{2})^{-1}P^{'}Py \\
+&=[(PX)^{'}PX]^{-1}(PX)^{'}Py
+\end{align*}
+
+と，$Py$の$PX$への回帰を行うことによって求めることができる．この$P$を用いる$y$から$Py$，Xから$PX$への変換は，Prais-Winsten変換(PW変換)と呼ばれる．
+
+## 実行可能なGLS
+$\Omega$が未知のときには$\Omega$の推定量$\hat{\Omega}$を用いてGLSEを求める．このとき
+
+$$
+\tilde{\beta}_{*}=(X^{'}\hat{\Omega}^{-1}X)^{-1}X^{'}\hat{\Omega}^{-1}y \tag{20}
+$$
+は実行可能な一般化最小2乗推定量(FGLSE)とよばれる．FGLSEの代表的な方法は2SPW(2 Step Prais-Winsten)である．2SPWは以下のステップでOLSが2度適用されて$\rho$を推定する．\
+
+### 第1ステップ
+式(1)にOLSを適用し，残差$e$から$\rho$を推定．$\rho$の推定方法として代表的な推定方は以下の3通り．\
+
+(i) 最小2乗原理\
+$u_t$がAR(1)に従っている時，残差にも同様の
+
+$$
+e_t=\hat{\rho}e_{t-1}+\hat{\epsilon}_{t}
+$$
+という関係ががあると考えられる．この式の$\hat{\rho}$を最小2乗法で推定する．\
+
+(ii) Yule-Walker方程式から\
+$u_t$がAR(1)に従っている時，Yule-Walker方程式は
+
+$$
+\gamma_1=\rho\gamma_0
+$$
+である．ここで
+
+$$
+\gamma_j=E(u_tu_{t-j})
+$$
+$\gamma_j$の推定量は
+
+$$
+\hat{\gamma_j}=\frac{1}{n}\sum_{t=j+1}{n}e_te_{t-j}, j=0,1
+$$
+によって与えられるので
+
+$$
+\hat{\rho}=\frac{\hat{\gamma_1}}{\hat{\gamma_0}}=\frac{\sum_{t=2}^{n}e_te_{t-1}}{\sum_{t=1}^{n}e^2_t}
+$$
+
+で推定．\
+
+(iii) Theil and Nagar\
+$n$が十分大きければ
+
+$$
+DW\fallingdotseq 2(1-\hat{\rho})
+$$
+の関係より
+
+$$
+\hat{\rho}=1-\frac{DW}{2}
+$$
+
+### 第2ステップ
+$\rho$の推定値$\hat{\rho}$を用いて$y$，$X$をPW変換して定数項なしの線形回帰を行う．この結果得られる$\beta$の推定量は実行可能なGLSE$\tilde{\beta}_{*}$である．\
+さらに，2SPWの$\tilde{\beta}_{*}$による残差から新たな$\rho$の推定値を計算し収束するまで繰り返す方法を繰り返しPrais-Winsten(ITERPW)と呼ぶ．
+
+## Rによる実践
+系列相関へのGLSによる対処例として以下の回帰分析を行う．
+
+$$
+銘柄iの収益率_t=\alpha+\beta (TOPIXの収益率_t)+u_t
+$$
+$t$は日次．ステップとしては\
+
+\begin{enumerate}
+  \item スクレイピングによるデータ収集
+  \item OLSEの推定
+  \item 系列相関の検定
+  \item FGLSEの推定
+\end{enumerate}
+
+## Rによる分析データのスクレイピング
+Rを使用してkabutan.jpから分析に使用するデータを抽出する．例として，ALBERT(証券コード:3906)で実施してみる．
+```{r message=FALSE, warning=FALSE}
+library(rvest)
+```
+
+```{r eval=FALSE}
+# 以下追加コード#############################################
+Sys.setlocale(locale="C")
+#############################################################
+
+# TOPIXデータの取得
+urls <- NULL
+kabukas <- list()
+
+base_url <- "https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page="
+
+# 1~10に対して同じ処理を繰り返す
+for (i in 1:10) {
+  # ページ番号付きのURLを作成
+  pgnum <- as.character(i)
+  urls[i] <- paste0(base_url, pgnum)
+  
+  # それぞれのURLにスクレイピングを実行
+  kabukas[[i]] <- read_html(urls[i]) %>%
+    html_node(css = "#stock_kabuka_table > table.stock_kabuka_dwm") %>% 
+    html_table() %>% 
+    dplyr::mutate_at("前日比", as.character) %>% 
+    dplyr::mutate_at("前日比％", as.character)
+  
+  Sys.sleep(1)
+}
+
+# 以下追加コード#############################################
+Sys.setlocale(locale="ja")
+#############################################################
+
+topix <- dplyr::bind_rows(kabukas) %>% 
+  dplyr::select(日付, `前日比％`) %>% 
+  dplyr::arrange(日付) %>% 
+  dplyr::slice(2:nrow(.)) %>% 
+  dplyr::mutate_at("前日比％", as.double) %>% 
+  dplyr::rename("TOPIX" = "前日比％")
+
+topix %>% 
+  head(10)
+```
+
+```{r eval=FALSE}
+# 以下追加コード#############################################
+Sys.setlocale(locale="C")
+#############################################################
+
+# ALBERTデータの取得
+code <- "3906"
+urls <- NULL
+kabukas <- list()
+
+base_url <- paste0("https://kabutan.jp/stock/kabuka?code=", code, "&ashi=day&page=")
+
+# 1~10に対して同じ処理を繰り返す
+for (i in 1:10) {
+  # ページ番号付きのURLを作成
+  pgnum <- as.character(i)
+  urls[i] <- paste0(base_url, pgnum)
+  
+  # それぞれのURLにスクレイピングを実行
+  kabukas[[i]] <- read_html(urls[i]) %>%
+    html_node(css = "#stock_kabuka_table > table.stock_kabuka_dwm") %>% 
+    html_table() %>% 
+    dplyr::mutate_at("前日比", as.character) %>% 
+    dplyr::mutate_at("前日比％", as.character)
+  
+  Sys.sleep(1)
+}
+
+# 以下追加コード#############################################
+Sys.setlocale(locale="ja")
+#############################################################
+
+albert <- dplyr::bind_rows(kabukas) %>% 
+  dplyr::select(日付, `前日比％`) %>% 
+  dplyr::arrange(日付) %>% 
+  dplyr::slice(2:nrow(.)) %>% 
+  # 以下追加コード#############################################
+  dplyr::mutate(`前日比％`=
+                  str_replace(`前日比％`,pattern="－",replacement = "0")) %>%
+  #############################################################
+  dplyr::mutate_at("前日比％", as.double) %>% 
+  dplyr::rename("ALBERT" = "前日比％")
+
+albert %>% 
+  head(10)
+```
+
+```{r eval=FALSE}
+train_data <- topix %>% 
+  dplyr::inner_join(albert, by = "日付")
+
+lm_1 <- lm(ALBERT ~ TOPIX, data = train_data)
+summary(lm_1)
+```
+
+
+## RによるDW検定
+```{r message=FALSE, warning=FALSE, eval=FALSE}
+library(lmtest)
+```
+
+```{r eval=FALSE}
+lmtest::dwtest(lm_1)
+```
+
+DW検定より，系列相関なしの帰無仮説が棄却されている．誤差項が系列相関をもつ疑いがあるためGLSによる対処を行う．
+
+## RによるGLS
+```{r message=FALSE, warning=FALSE, eval=FALSE}
+library(prais)
+```
+
+```{r eval=FALSE}
+pw_1 <- prais::prais_winsten(ALBERT ~ TOPIX, data = train_data)
+summary(pw_1)
+```
+
+PW変換によるGLSの結果，DW統計量が1.738から1.99と変化し，系列相関を持つ場合でもBLUEとなる$\beta$の推定量が求められる．
+
+## 日本銀行時系列統計データ検索サイトの紹介
+https://www.stat-search.boj.or.jp/
+
+## 参考文献
+[1] 蓑谷 千凰彦 (1992) 『計量経済学の新しい展開』多賀出版 \
+[2] 蓑谷 千凰彦 (2007) 『計量経済学大全』東洋経済新報社 \
+[3] 山本 拓 (1995) 『計量経済学 (新経済学ライブラリ)』新世社
+
+## 付録
+
+### 正定値行列
+ある対称行列$A$が任意の列ベクトル$x$によって2次形式$x^TAx$を構成した時，常に$x^TAx>0$となるとき，この対称行列Aを正定値行列という． \
+対称行列が正定値行列となるとき，表れる便利な性質として固有値が全て正となる． \
+
+(証明)
+$$
+Av=\lambda v \tag{A}
+$$
+ここで，$v^Tv=1$と正規化し，式(A)の両辺に左から$v^T$を掛けると
+$$
+v^TAv=v^T\lambda v=\lambda v^Tv=\lambda
+$$
+となる．最左辺は正定値行列の定義から正なので$\lambda>0$となる．これは全ての固有値に当てはまるので，正定値行列の固有値は全て正となる．
+
+### 正定値対称行列の逆行列
+$A$を対称行列とする．逆行列の定義より
+
+$$
+AA^{-1}=I
+$$
+両辺の転置をとると
+
+$$
+(A^{-1})^{T}A^{T}=I
+$$
+$A$は対称行列なので
+
+$$
+(A^{-1})^{T}A=I
+$$
+両辺に右から$A^{-1}$をかけると
+
+$$
+(A^{-1})^{T}=A^{-1}
+$$
+となり$A$の逆行列の転置は逆行列と等しいので，$A^{-1}$は対称行列
+
+
+### 正定値対称行列の直交分解
+$A$が対称行列の時，
+
+\begin{align*}
+A=T^{'}DT \\
+T^{'}=T^{-1} \\
+\end{align*}
+
+\begin{center}
+$D$は対角成分に固有値が並んだ対角行列 \\
+$T$は大きさ1の固有ベクトルを横に並べて作った直交行列
+\end{center}
+
+ここで$A$が正定値対称行列なので固有値は全て正なので$D$の対角成分を，その平方根で置き換えた行列を$S$とすると
+
+\begin{align*}
+D=SS&=S^{'}S \\
+A=T^{'}DT=T^{'}S^{'}S&T=(ST)^{'}(ST)
+\end{align*}
+
+\begin{center}
+$S$，$T$が正則なので$ST$も正則．
+\end{center}
+
+正則な行列は，適当な直交行列$Q$を使って$Q$と上三角行列の積に分解できる(QR分解)ので
+
+\begin{align*}
+ST=QR
+\end{align*}
+
+\begin{center}
+$R$は上三角行列
+\end{center}
+
+従って，
+
+\begin{align*}
+A=(ST)^{'}(ST)=(QR)^{'}QR=R^{'}Q^{'}QR
+\end{align*}
+
+$Q$は直交行列だったから
+
+\begin{align*}
+(Q^{'}Q)=I
+\end{align*}
+
+故に，
+
+\begin{align*}
+A=R^{'}R
+\end{align*}
+
+これより，正定値対称行列ならコレスキー分解ができる．
+

@@ -1,0 +1,1570 @@
+---
+title: "多重共線性とその対処法"
+author: "川上 幹男"
+date: "2020/11/27"
+header_includes:
+- \usepackage{bm}
+output:
+  pdf_document: 
+    latex_engine: lualatex 
+    toc: true
+    
+documentclass: ltjsarticle
+---
+
+## 多重共線性とは
+
+多重共線性とは説明変数間の高い相関のことである．多重共線性が発生している時に，最小2乗法で$\beta$を推定すると$\beta$の分散が大きくなり，推定精度は悪くなる．ここで以下の重回帰モデルを例に考える．
+
+\begin{align*}
+Y_i=\beta_0+\beta_1X_{1i}+\beta_2X_{2i}+u_i　\tag{1}
+\end{align*}
+
+式(1)のパラメータ$\beta_j$の最小2乗推定量(以下，OLSE)を$\hat{\beta_j}$とすれば，$\hat{\beta_j}$の分散は，
+
+\begin{align*}
+var(\hat{\beta_1})=\frac{\sigma^2}{\sum x_1^2}\left(\frac{1}{1-r_{12}^2}\right) \\
+var(\hat{\beta_2})=\frac{\sigma^2}{\sum x_2^2}\left(\frac{1}{1-r_{12}^2}\right) \tag{2}
+\end{align*}
+
+と表すことができる（導出は付録）．ここで$\sum x_j^2=\sum_{t=1}^{n}(X_{jt}-\bar{X_j})^{2}$，$r_{12}$は$X_1$と$X_2$の単相関係数． \
+
+$X_1$と$X_2$が完全に無相関であれば$r_{12}=0$であるから式(2)は最小になる．一方，$X_1$と$X_2$の相関が高くなるにしたがって$r_{12}^2$は1に近づくため$\hat{\beta_j}$の分散は大きくなる．
+
+## 多重共線性の尺度-分散拡大要因
+
+前節の式(2)において，分散が大きくなる要因
+
+\begin{align*}
+\frac{1}{1-r_{12}^2} \tag{3}
+\end{align*}
+
+は分散拡大要因Variance inflation factor(VIF)と呼ばれ
+
+\begin{align*}
+VIF_1=VIF_2=\frac{1}{1-r_{12}^2} \tag{4}
+\end{align*}
+
+のように表される．また，$1-r_{12}^2$は許容度toleranceと呼ばれている．\
+
+一般に，重回帰モデルを以下のように表す．
+
+\begin{align*}
+Y_i=\beta_0+\beta_1X_{1i}+\cdots\cdots+\beta_kX_{ki}+u_i　\tag{5}
+\end{align*}
+
+このとき，説明変数の$k\times k$の単相関行列を$R$とすると，$VIF_j$は$R^{-1}$の$(j,j)$要素で与えられるから（導出は付録）
+
+\begin{align*}
+VIF_j=\frac{1}{1-R_j^2}　\tag{6}
+\end{align*}
+
+と表現できる．ここで$R_j^2$は$X_j$の$X_1$，$X_2$，$\cdots\cdots$，$X_{j-1}$，$X_{j+1}$，$\cdots\cdots$，$X_{k}$への回帰を取った時の決定係数である．$R^2_j\geq 0.9$のとき，$VIF_j\geq 10$となるため，$VIF_j$が10以上のとき多重共線性によって$\hat{\beta_j}$の分散が大きくなり，推定精度が損なわれる恐れが十分あるとされている．
+
+## 多重共線性の影響
+
+以下に改めて，多重共線性がOLSEに及ぼす影響をまとめる．\
+
+(1)$\hat{\beta}$の推定精度が悪くなる\
+\ \ 多重共線性の影響がVIFに強く現れるならば，$\hat{\beta}$の分散が大きくなり推定精度は悪化．\
+
+(2)$\hat{\beta}$は不安定になる\
+\ \ 推定量の分散が大きいため，推定値は不安定となる．推定値の符号条件を重視する分析では分散の拡大によって符号が逆転するケースも起こりうる．
+
+## 多重共線性の対処手法-リッジ回帰
+
+多重共線性の対処法の1つとして，リッジ回帰を紹介する．但し，蓑谷[1992]で述べられるようにリッジ回帰は多重共線性の問題が必ず解決するわけではないことを強調しておく．
+
+## リッジ推定量
+
+説明変数間に完全な相関があれば，$X^{'}X$は特異となり，逆行列が存在しない．\
+
+(証明)\
+$X^{'}X$は対称行列であるので直交行列$P$によって
+
+\begin{align*}
+X^{'}X=P\Gamma P^{'}\ \ \ (\Gamma=diag(\gamma_0,\cdots,\gamma_D))
+\end{align*}
+
+と対角化可能．従って，
+
+\begin{align*}
+(X^{'}X)^{-1}&=(P\Gamma P^{'})^{-1} \\
+&=(P^{'})^{-1}\Gamma^{-1}P^{-1} \\
+&=P\Gamma^{-1}P^{'} \\
+&=Pdiag(1/\gamma_0,1/\gamma_1,\cdots,1/\gamma_d)P^{'}
+\end{align*}
+
+ここで最小の固有値がゼロ(=非特異行列)の場合$1/\gamma_0$が発散してしまい逆行列が求まらない．\
+
+任意の非特異行列$A$に任意定数$c>0$をかけて
+
+\begin{align*}
+X^{'}X+cA
+\end{align*}
+
+を作れば，この行列は非特異となる．\
+
+(証明)\
+\begin{align*}
+(X^{'}X+cA)^{-1}&=(P\Gamma P^{'}+cA)^{-1}\\
+&=\{P(\Gamma+cA)P^{'}\}^{-1}\\
+&=P(\Gamma+cA)^{-1}P^{'}\\
+&=Pdiag\left(\frac{1}{\gamma_0+c\lambda_0},\frac{1}{\gamma_1+c\lambda_1},\cdots,\frac{1}{\gamma_D+c\lambda_D}\right)P^{'}
+\end{align*}
+ここで，$\lambda_0,\lambda_1,\cdots,\lambda_D$は，$A$の固有値．上記より，最小の固有値がゼロ(=非特異行列)の場合でも，発散を防ぎ正則行列とすることができる．\
+
+リッジ推定はこの特別の場合である．
+
+\begin{align*}
+y=X\beta+u
+\end{align*}
+
+の$\beta$のリッジ推定量ridge estimatorは次式で与えられる．
+
+\begin{align*}
+\hat{\beta_R}=(X^{'}X+cI)^{-1}X^{'}y \tag{7}
+\end{align*}
+
+ここで$c>0$は任意定数，$I$は単位行列である．リッジ推定量は
+
+\begin{align*}
+\hat{\beta_R}&=(X^{'}X+cI)^{-1}X^{'}y \\
+&=(X^{'}X+cI)^{-1}X^{'}X(X^{'}X)^{-1}X^{'}y \\
+&=(X^{'}X+cI)^{-1}X^{'}X\hat{\beta} \\
+&=W\hat{\beta} \tag{8}
+\end{align*}
+
+$\hat{\beta_R}$は通常のOLSE$\hat{\beta}$の線形変換であることが分かる．ここで
+
+\begin{align*}
+W=(X^{'}X+cI)^{-1}X^{'}X \tag{8}
+\end{align*}
+
+である．期待値と分散は
+
+\begin{align*}
+E[\hat{\beta_R}]&=E[W\hat{\beta}] \\
+&=WE[\hat{\beta}] \\
+&=W\beta \tag{9}
+\end{align*}
+
+\begin{align*}
+var[\hat{\beta_R}]&=E[(\hat{\beta_R}-E[\hat{\beta_R}])(\hat{\beta_R}-E[\hat{\beta_R}])^{'}] \\
+&=E[(W\hat{\beta}-W\beta)(W\hat{\beta}-W\beta)^{'}] \\
+&=E[W(X^{'}X)^{-1}X^{'}uu^{'}X(X^{'}X)^{-1}W^{'}] \\
+&=\sigma^{2}W(X^{'}X)^{-1}W^{'} \tag{10}
+\end{align*}
+
+であるから，$\hat{\beta_R}$は不偏推定量でないため偏り(bias)を持ち，$\hat{\beta_R}$のバイアスは
+
+\begin{align*}
+B(\hat{\beta_R})=-c(X^{'}X+cI)^{-1}\beta
+\end{align*}
+
+となる(導出は付録)．\
+このように$\hat{\beta_R}$は$\beta$の不偏推定量ではないが，$var(\hat{\beta})-var(\hat{\beta_R})$は任意の$c>0$に対して正値定符号である(証明は付録)．\
+つまり，$\hat{\beta_R}$の要素$\hat{\beta_{Rj}}$でいえば，$\hat{\beta_{Rj}}$は偏りがあるが，$var(\hat{\beta_{Rj}})<var(\hat{\beta_j})$である．従って，$\hat{\beta_{Rj}}$の偏りの2乗が$var(\hat{\beta_{Rj}})<var(\hat{\beta_j})$より小さければ$MSE(\hat{\beta_{Rj}})<MSE(\hat{\beta_j})$となる．
+
+## リッジ推定量のMSE
+
+$\hat{\beta_R}$のMSEを$k+1$個の$\hat{\beta_{Rj}}$のMSEの和，すなわち
+
+\begin{align*}
+MSE(\hat{\beta_R})&=E[(\hat{\beta_R}-\beta)^{'}(\hat{\beta_R}-\beta)] \\
+&=E[(\hat{\beta_R}-E[\hat{\beta_R}]+E[\hat{\beta_R}]-\beta)^{'}(\hat{\beta_R}-E[\hat{\beta_R}]+E[\hat{\beta_R}]-\beta)] \\
+&=E[(\hat{\beta_R}-W\beta)^{'}(\hat{\beta_R}-W\beta)]+E[(W\beta-\beta)^{'}(W\beta-\beta)] \\
+&=E[(\hat{\beta_R}-W\beta)^{'}((\hat{\beta_R}-W\beta))]+B(\hat{\beta_R})^{'}B(\hat{\beta_R}) \\
+&=E[tr\{(\hat{\beta_R}-W\beta)^{'}((\hat{\beta_R}-W\beta))\}]+B(\hat{\beta_R})^{'}B(\hat{\beta_R}) \\
+&=E[tr\{(\hat{\beta_R}-W\beta)((\hat{\beta_R}-W\beta))^{'}\}]+B(\hat{\beta_R})^{'}B(\hat{\beta_R}) \\
+&=tr[var(\hat{\beta_R})]+B(\hat{\beta_R})^{'}B(\hat{\beta_R}) \\
+&=tr[\sigma^{2}(X^{'}X+cI)^{-1}X^{'}X(X^{'}X+cI)^{-1}]+c^{2}\beta^{'}(X^{'}X+cI)^{-2}\beta \\
+&=\sigma^{2}\sum_{i=1}^{k+1}\frac{\lambda_i}{(\lambda_i+c)^{2}}+c^{2}\sum_{i=1}^{k+1}\frac{\alpha^{2}_{i}}{(\lambda_i+c)^{2}} \tag{11}
+\end{align*}
+
+となる．最終行の導出は付録．\
+式(11)の第1項に注目し，$c>0$に対して，
+
+\begin{align*}
+  \frac{d}{dc}\left[\frac{\lambda_i}{(\lambda_i+c)^{2}}\right]=\frac{-2\lambda_i(\lambda_i+c)}{(\lambda_i+c)^{4}}<0
+\end{align*}
+
+であるから，$c$が大きくなるほど$\hat{\beta_{Rj}}$の分散は小さくなる．式(11)の第2項に注目すると，
+
+\begin{align*}
+  \frac{d}{dc}\left[\frac{c^{2}\alpha_{i}^{2}}{(\lambda_i+c)^{2}}\right]=\frac{2c\alpha^{2}_{i}(\lambda_i+c)^{2}-2c^{2}\alpha^{2}_{i}(\lambda_{i}+c)}{(\lambda_i+c)^{4}}>0
+\end{align*}
+
+であるから，$\hat{\beta_{Rj}}$の偏りの2乗は，$c$が大きくなるほど大きくなる．従って，偏りの2乗の増加より，分散の減少の方が大きい$c$の値を見つけられるなら
+
+\begin{align*}
+  MSE(\hat{\beta_R})<MSE(\hat{\beta})
+\end{align*}
+
+とできる．
+
+## リッジ回帰の残差平方和，決定係数
+
+リッジ回帰の残差は
+
+\begin{align*}
+  y-X\hat{\beta_R}&=y-X\hat{\beta}+X\hat{\beta}-X\hat{\beta_R} \\
+  &=y-X\hat{\beta}+X(\hat{\beta}-\hat{\beta_R})
+\end{align*}
+
+と表すことができるから，リッジ回帰の残差平方和を$SSE_R$，通常の最小2乗回帰の残差平方和を$SSE$とすれば
+
+\begin{align*}
+  SSE_R&=(y-X\hat{\beta_R})^{'}(y-X\hat{\beta_R}) \\
+  &=\{(y-X\hat{\beta})+X(\hat{\beta}-\hat{\beta_R})\}^{'}\{(y-X\hat{\beta})+X(\hat{\beta}-\hat{\beta_R})\} \\
+  &=SSE+(\hat{\beta_R}-\hat{\beta})^{'}X^{'}X(\hat{\beta_R}-\hat{\beta}) \tag{12}
+\end{align*}
+
+式(12)の右辺第2項は，$c=0$のとき$\hat{\beta_R}=\hat{\beta}$であるから0．$c>0$のとき，この2次形式は正値定符号であり，$c$の増加関数である(証明は付録)．\
+ゆえに
+
+\begin{align*}
+  SSE_R\geq SSE
+\end{align*}
+
+リッジ回帰の決定係数を
+
+\begin{align*}
+  R^{2}_{R}=1-\frac{SSE_R}{\sum y^{2}}
+\end{align*}
+
+によって定義するなら，$R^{2}_{R}$は必ず$R^{2}=1-\frac{SSE}{\sum y^2}$より小さく，$c$が大きくなるほど，$R^{2}_{R}$は$R^{2}$より小さくなる．
+
+## リッジパラメータ($c$)の決定基準
+
+$c$を決定するための基準としてマローズの$C_p$基準と$GCV$最小基準を紹介する．\
+
+(1)\ マローズの$C_p$と類似の基準\
+\ マローズの$C_p$は
+
+\begin{align*}
+  \frac{1}{\sigma^{2}}\sum_{i=1}^{n}MSE(\hat{Y_i})
+\end{align*}
+
+の推定値を与える．これと同様の基準をリッジ回帰に適用すると
+
+\begin{align*}
+  C_p=\frac{SSE_R}{s^{2}}-n+\frac{2n}{n+c}+2\sum_{i=1}{k}\left(\frac{\lambda_i}{\lambda_i+c}\right)
+\end{align*}
+
+となる(導出は付録)．\
+よって，$C_p$は，\
+\begin{itemize}
+  \item $c$の増加関数である$SSE_{R}$ \
+  \item $c$の減少関数である$\frac{2n}{n+c}+2\sum_{i=1}^{k}\left(\frac{\lambda_i}{\lambda_i+c}\right)$ \
+\end{itemize}
+の和である．\
+
+(2)\ 一般化相互確認$GCV$\
+\ 本来はパラメータの安定性が標本期間外においても成立するか判断を与えるのが相互確認(cross validation)である．これを一般化した一般化相互確認最小基準がリッジ回帰のパラメータ$c$の決定基準とWahba, Golub, and Heath(1979)が提唱．リッジ回帰において$GCV$は以下で与えられる．
+
+\begin{align*}
+  GCV&=\frac{\sum^{n}_{i=1}e^{2}_{Ri}}{\{n-tr(A_c\}^{2}} \\
+  &=\frac{SSE_R}{\left\{n-\left[\frac{n}{n+c}+tr(H_c)\right]\right\}^{2}}
+\end{align*}
+
+蓑谷(1972)によると，$C_p$，$GCV$いずれの最小基準を採用しても同じ$c$を与えることが多いため，どちらでも良いとされている．
+
+## その他の正則化法
+
+リッジ回帰は正則化法(regularization)の1つと解釈できる．正則化法は，最小にしたい関数（OLSなら誤差2乗和）$S(\beta)$を用いて以下のように定式化される．
+
+\begin{align*}
+  \underset{\beta}{min}\left\{\frac{1}{2n}S(\beta)+\lambda R(\beta)\right\}
+\end{align*}
+
+ここで，$R(\beta)$は正則化項とよばれ，$\lambda$は正則化パラメータと呼ばれる．この表現を用いて正則化法を3つ(Ridge，Lasso，ElasticNet)紹介する．\
+
+・Ridge\
+リッジ回帰を正則化法の定式で表現すると以下となる．
+
+\begin{align*}
+  \underset{\beta}{min}\left\{\frac{1}{2n}\|y-X\beta\|^{2}_{2}+\frac{\lambda}{2}\|\beta\|^{2}_{2}\right\} \tag{13}
+\end{align*}
+
+ここで正則化パラメータ$\lambda$は，これまでの節で$c$と表現してきたパラメータであることに注意されたい．\
+
+・Lasso\
+ラッソ回帰を正則化法の定式で表現すると以下となる．
+
+\begin{align*}
+  \underset{\beta}{min}\left\{\frac{1}{2n}\|y-X\beta\|^{2}_{2}+\lambda\|\beta\|_{1}\right\} \tag{14}
+\end{align*}
+
+ラッソ回帰の特徴として，正則化項にパラメータのL1ノルムを使用することで，いくつかのパラメータの推定値を0に縮小する性質を持つ．これは主に機械学習での変数選択に利用されることが多い．
+
+・ElasticNet\
+エラスティックネットを正則化法の定式で表現すると以下となる．
+
+\begin{align*}
+  \underset{\beta}{min}\left\{\frac{1}{2n}\|y-X\beta\|^{2}_{2}+\lambda\sum_{j=1}^{p}\left\{\alpha |\beta_j|+\frac{(1-\alpha)\beta_{j}^{2}}{2}\right\}\right\} \tag{15}
+\end{align*}
+
+エラスティックネットの正則化項に注目すると，L1とL2ノルムの両方の性質を持つことが分かる．これにより，パラメータ$\alpha$によってRidgeとLassoの正則化の強さを調整できる．
+
+## Rによる演習用データの概要
+
+以降の演習では，Rにサンプルデータセットとして含まれるBoston住宅価格データを利用する．\
+本データは，506行14列となっており，米国センサス局が集計したデータである．各カラムの説明は以下となる．
+
+\begin{table}[htb]
+  \begin{center}
+    \begin{tabular}{|l|l|} \hline
+      カラム名 & 説明 \\ \hline \hline
+      crim & 町ごとの一人当たり犯罪率 \\ \hline
+      zn & 宅地区画が25,000平方フィートを超える割合 \\ \hline
+      indus & 町ごとの非小売業面積の割合 \\ \hline
+      chas & チャーリーズ川ダミー変数（川の境界にある場合は1） \\ \hline
+      nox & 窒素酸化物濃度 \\ \hline
+      rm & 1住宅当たりの平均部屋数 \\ \hline
+      age & 1940年以前に建てられた持ち家の割合 \\ \hline
+      dis & ボストンの5つの雇用センターまでの距離の加重平均 \\ \hline
+      rad & 高速道路へのアクセス性の指標 \\ \hline
+      tax & 10,000ドル当たりの固定資産税率 \\ \hline
+      ptratio & 生徒教師の比率 \\ \hline
+      black & 町の黒人割合 \\ \hline
+      lstat & 人口当たりのステータスが低い率 \\ \hline
+      medv & 1000ドル台の持ち家価格の中央値 \\ \hline
+    \end{tabular}
+  \end{center}
+\end{table}
+
+```{r message=FALSE, warning=FALSE}
+# Bostonデータセットの読み込み
+library(MASS)
+data("Boston")
+
+# 変数df_BostonにBostonデータセットを格納
+df_Boston <- Boston
+
+# Bostonデータセットの先頭10行を表示
+head(df_Boston, n = 10)
+```
+
+
+## Rパッケージ{ggplot}によるデータ可視化
+
+Rパッケージ\{ggplot\}を利用して，Bostonデータを可視化してみる．\
+まず，ボストンの住宅価格の中央値と
+
+```{r message=FALSE, warning=FALSE}
+# ggplot2の読み込み({tidyvers}パッケージに含まれている)
+library(tidyverse)
+
+# ggplotの描画領域を関数ggplot()で作成
+# その後，詳細な設定やデータの描画を"+"記号で追記していく
+g1 <- ggplot() +
+  # 関数geom_point()は，散布図を描画する関数
+  geom_point(data = df_Boston, mapping = aes(x = medv, y = rm))
+
+g1
+```
+
+ボストンの住宅価格の中央値と1住宅当たりの平均部屋数には右肩上がりの関係が見て取れる．\
+さらに，散布図に生徒教師の比率が平均よりも高いか低いかで色分けして可視化を行ってみる．
+
+```{r message=FALSE, warning=FALSE}
+g2 <- ggplot() +
+  # 関数geom_point()は，散布図を描画する関数
+  geom_point(data = df_Boston, mapping = aes(x = medv, y = rm, group = (ptratio > mean(ptratio)), colour = (ptratio > mean(ptratio))), size = 2)
+
+g2
+```
+
+上記の結果から，生徒教師の比率が平均よりも低いほど住宅価格の中央値，平均部屋数ともに高い傾向が見られる．生徒教師の比率による違いを色分けでなく別の図表で分けて可視化するにはファセットを利用する．
+
+```{r message=FALSE, warning=FALSE}
+g3 <- ggplot() +
+  # 関数geom_point()は，散布図を描画する関数
+  geom_point(data = df_Boston, mapping = aes(x = medv, y = rm)) +
+  facet_wrap(~ (ptratio > mean(ptratio)))
+
+g3
+```
+
+## Rによる分散拡大要因算出
+Rでは，パッケージ\{car\}に含まれるvif関数で重回帰モデルのVIFを算出可能．
+
+```{r message=FALSE, warning=FALSE}
+# carの読み込み
+library(car)
+
+# 多重共線性を生み出すために1住宅当たりの平均部屋数を2乗した列を追加
+df_Boston <- df_Boston %>% 
+  dplyr::mutate(rm_sq = rm ^2)
+
+# 重回帰モデル構築
+lm_Boston <- lm(medv~., data = df_Boston)
+
+summary(lm_Boston)
+```
+
+rmが散布図では住宅価格の中央値と右肩上がりの関係があったにも関わらず係数が負となっていることに注目．ここでVIFを算出する．
+
+```{r message=FALSE, warning=FALSE}
+car::vif(lm_Boston)
+```
+
+結果から，rmとその2乗であるrm_sqはVIFが10を超えており多重共線性が発生している．
+
+## Rによるリッジ回帰
+
+VIFにより多重共線性が検出されたため対処としてリッジ回帰を実装する．ここでは\{glmnet\}パッケージを紹介する．glmnetはエラスティックネットを実装するパッケージだが，式(15)における$\alpha$に相当するパラメータを0として関数に渡すことでリッジ回帰を実現できる．
+
+```{r message=FALSE, warning=FALSE}
+# glmnetの読み込み
+library(glmnet)
+
+# ボストンデータをXとyに分割
+X <- df_Boston %>% 
+  dplyr::select(-medv) %>% 
+  as.matrix()
+
+y <- df_Boston %>% 
+  dplyr::select(medv) %>% 
+  as.matrix()
+
+# クロスバリデーションにより最適なリッジパラメータを探索
+fit_Boston <- cv.glmnet(X, y, family = "gaussian", alpha = 0, nfolds = nrow(X))
+
+# 探索結果を描画
+plot(fit_Boston, label=T)
+
+# 最適なリッジパラメータ表示
+fit_Boston$lambda.min
+```
+
+ここで注意点としては，クロスバリデーションのfold数によって最適なリッジパラメータが変動するため，データの行数が少ない場合は，データ数で分割したクロスバリデーション(leave one out cross validation)を実行することが望ましい．/
+最後に最適なリッジパラメータを使用してリッジ推定量を求める．
+
+```{r message=FALSE, warning=FALSE}
+ridge.model <- glmnet(x = X, y = y, family = "gaussian", alpha = 0, lambda = fit_Boston$lambda.min)
+ridge.model$beta
+```
+
+rmの係数符号が正となっていることが確認できる．
+
+
+
+
+
+## 参考文献
+[1] 蓑谷 千凰彦 (1992) 『計量経済学の新しい展開』多賀出版
+
+## 付録
+
+### $\hat{\beta}$の分散証明
+
+説明変数2個の重回帰モデルは
+
+\begin{align*}
+y=
+ \left(
+  \begin{array}{c}
+     Y_1 \\
+     \vdots \\
+     Y_n
+  \end{array}
+ \right)&
+，\ X=
+ \left(
+  \begin{array}{ccc}
+     1 & X_{11} & X_{21} \\
+     \vdots & \vdots & \vdots \\
+     1 & X_{1n} & X_{2n}
+  \end{array}
+ \right)
+\end{align*}
+
+\begin{align*}
+\beta=
+\left(
+  \begin{array}{c}
+     \beta_1 \\
+     \beta_2 \\
+     \beta_3
+  \end{array}
+ \right)&
+ ，\ u=
+ \left(
+  \begin{array}{c}
+     u_1 \\
+     \vdots \\
+     u_n
+  \end{array}
+ \right)
+\end{align*}
+
+とすると
+
+\begin{align*}
+  y=X\beta+u
+\end{align*}
+
+と表現．
+
+\begin{align*}
+  X^{'}X=
+  \left(
+    \begin{array}{ccc}
+       1 & \cdots & 1 \\
+       X_{11} & \cdots & X_{1n} \\
+       X_{21} & \cdots & X_{2n}
+    \end{array}
+ \right)
+ \left(
+    \begin{array}{ccc}
+       1 & X_{11} & X_{21} \\
+       \vdots & \vdots & \vdots \\
+       1 & X_{1n} & X_{2n}
+    \end{array}
+ \right)
+ =
+ \left(
+    \begin{array}{ccc}
+       n & \sum X_2 & \sum X_3 \\
+       \sum X_2 & \sum X_2^2 & \sum X_2X_3 \\
+       \sum X_3 & \sum X_2X_3 & \sum X_3^2
+    \end{array}
+ \right)
+\end{align*}
+
+\begin{align*}
+  X^{'}y=
+  \left(
+    \begin{array}{ccc}
+       1 & \cdots & 1 \\
+       X_{11} & \cdots & X_{1n} \\
+       X_{21} & \cdots & X_{2n}
+    \end{array}
+ \right)
+ \left(
+  \begin{array}{c}
+     Y_1 \\
+     \vdots \\
+     Y_n
+  \end{array}
+ \right)=
+ \left(
+  \begin{array}{c}
+     \sum Y \\
+     \sum X_2Y \\
+     \sum X_3Y
+  \end{array}
+ \right)
+\end{align*}
+
+よりOLSの正規方程式は
+
+\begin{align*}
+  \left(
+    \begin{array}{ccc}
+       n & \sum X_2 & \sum X_3 \\
+       \sum X_2 & \sum X_2^2 & \sum X_2X_3 \\
+       \sum X_3 & \sum X_2X_3 & \sum X_3^2
+    \end{array}
+ \right)
+ \left(
+  \begin{array}{c}
+     \hat{\beta_1} \\
+     \hat{\beta_2} \\
+     \hat{\beta_3}
+  \end{array}
+ \right)=
+ \left(
+  \begin{array}{c}
+     \sum Y \\
+     \sum X_2Y \\
+     \sum X_3Y
+  \end{array}
+ \right)
+\end{align*}
+
+従って，
+
+\begin{align*}
+  \left\{
+    \begin{array}{l}
+      n\hat{\beta_1}+\sum X_2\hat{\beta_2}+\sum X_3\hat{\beta_3}=\sum Y \\
+      \sum X_2\hat{\beta_1}+\sum X_2^2\hat{\beta_2}+\sum X_2X_3\hat{\beta_3}=\sum X_2Y \\
+      \sum X_3\hat{\beta_1}+\sum X_2X_3\hat{\beta_2}+\sum X_3^2\hat{\beta_3}=\sum X_3Y
+    \end{array}
+  \right.
+\end{align*}
+
+正規方程式の1番目の式，両辺を$n$で割り
+
+\begin{align*}
+  \hat{\beta_1}=\bar{Y}-\hat{\beta_2}\bar{X_1}-\hat{\beta_3}\bar{X_2}
+\end{align*}
+
+上式を正規方程式の2，3番目に代入すると
+
+\begin{align*}
+  \hat{\beta_2}\sum x_2^2+\hat{\beta_3}\sum x_2x_3=\sum x_2y \\
+  \hat{\beta_2}\sum x_2x_3+\hat{\beta_3}\sum x_3^2=\sum x_3y
+\end{align*}
+
+小文字はそれぞれの平均からの偏差偏差．上式を行列表示すると
+
+\begin{align*}
+  \left(
+    \begin{array}{cc}
+       \sum x_2^2 & \sum x_2x_3 \\
+       \sum x_2x_3 & \sum x_3^2
+    \end{array}
+ \right)
+ \left(
+    \begin{array}{c}
+       \hat{\beta_2} \\
+       \hat{\beta_3}
+    \end{array}
+ \right)=
+ \left(
+    \begin{array}{c}
+       \sum x_2y \\
+       \sum x_3y
+    \end{array}
+ \right)
+\end{align*}
+
+従って，
+
+\begin{align*}
+ \left(
+    \begin{array}{c}
+       \hat{\beta_2} \\
+       \hat{\beta_3}
+    \end{array}
+ \right)=
+ \left(
+    \begin{array}{cc}
+       \sum x_2^2 & \sum x_2x_3 \\
+       \sum x_2x_3 & \sum x_3^2
+    \end{array}
+ \right)^{-1}
+ \left(
+    \begin{array}{c}
+       \sum x_2y \\
+       \sum x_3y
+    \end{array}
+ \right)
+\end{align*}
+
+定数項$\beta_0$以外の$\beta_j$を求める方法は以下のように考えられる．
+
+\begin{align*}
+  \bar{Y}=\beta_1+\beta_2\bar{X_2}+\beta_3\bar{X_3}+\bar{u}
+\end{align*}
+
+上式を説明変数2の重回帰モデル式から引くと
+
+\begin{align*}
+  Y_i-\bar{Y}=\beta_2(X_{1i}-\bar{X_2})+\beta_3(X_{2i}-\bar{X_2})+u_i-\bar{u}
+\end{align*}
+
+すなわち
+
+\begin{align*}
+  y_i=\beta_2x_{1i}+\beta_3x_{2i}+v_i
+\end{align*}
+
+$v_i=u_i-\bar{u}$である．行列表示すると，
+
+\begin{align*}
+\underline{y}=
+ \left(
+  \begin{array}{c}
+     y_1 \\
+     y_2 \\
+     \vdots \\
+     y_n
+  \end{array}
+ \right)&
+，\ \underline{X}=
+  \left(
+  \begin{array}{cc}
+     x_{11} & x_{21} \\
+     x_{12} & x_{22} \\
+     \vdots & \vdots \\
+     x_{1n} & x_{2n}
+  \end{array}
+ \right)
+\end{align*}
+
+$\beta_1$，$\beta_2$を要素とするパラメータベクトルを
+
+\begin{align*}
+  \gamma=
+  \left(
+  \begin{array}{c}
+     \beta_1 \\
+     \beta_2
+  \end{array}
+ \right)
+\end{align*}
+
+誤差項のベクトルを$v^{'}=(v_1\cdots v_n)$とすると
+
+\begin{align*}
+  \underline{y}=\underline{X}\gamma+v
+\end{align*}
+
+説明変数2の重回帰分析モデルの正規方程式より
+
+\begin{align*}
+  (\underline{X}^{'}\underline{X})\hat{\gamma}=\underline{X}^{'}\underline{y}
+\end{align*}
+
+上式より，パラメータの推定値は
+
+\begin{align*}
+  \hat{\gamma}=(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}\underline{y}
+\end{align*}
+
+従って，
+
+\begin{align*}
+  Var(\hat{\gamma})&=var((\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}\underline{y}) \\
+  &=var[(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}\underline{X}\gamma+(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}v] \\
+  &=E[(\gamma+(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}v-\gamma)(\gamma+(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}v-\gamma)^{'}] \\
+  &=E[(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}vv^{'}\underline{X}(\underline{X}^{'}\underline{X})^{-1}]\\
+  &=(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}E[vv^{'}]\underline{X}(\underline{X}^{'}\underline{X})^{-1}\\
+  &=\sigma^2(\underline{X}^{'}\underline{X})^{-1}
+\end{align*}
+
+が得られる．ここで，
+
+\begin{align*}
+  (\underline{X}^{'}\underline{X})^{-1}=
+  \left(
+  \begin{array}{cc}
+     \sum x_1^2 & \sum x_1x_2 \\
+     \sum x_1x_2 & \sum x_2^2
+  \end{array}
+ \right)^{-1}
+ =\frac{1}{D}
+ \left(
+  \begin{array}{cc}
+     \sum x_2^2 & -\sum x_1x_2 \\
+     -\sum x_1x_2 & \sum x_1^2
+  \end{array}
+ \right)
+\end{align*}
+
+ここで，$D=\sum x_2^2\sum x_3^2-(\sum x_2x_3)^2$である．従って，
+
+\begin{align*}
+  \hat{\gamma}&=(\underline{X}^{'}\underline{X})^{-1}\underline{X}^{'}\underline{y} \\
+  &=\frac{1}{D}
+  \left(
+  \begin{array}{cc}
+     \sum x_2^2(\sum x_1y)-(\sum x_1x_2)(\sum x_2y) \\
+     \sum x_1^2(\sum x_2y)-(\sum x_1x_2)(\sum x_1y)
+  \end{array}
+ \right)
+\end{align*}
+
+また，
+
+\begin{align*}
+  D&=\sum x_1^2\sum x_2^2\left(1-\frac{(\sum x_1x_2)^2}{\sum x_1^2\sum x_2^2}\right) \\
+  &=\sum x_1^2\sum x_2^2(1-r_{12}^2)
+\end{align*}
+
+$r_{12}$は$X_1$と$X_2$の相関係数．上式より$(\underline{X}^{'}\underline{X})^{-1}$の(1,1)要素は
+
+\begin{align*}
+  \frac{1}{\sum x_1^2(1-r^2_{12})}
+\end{align*}
+
+(2,2)要素は
+
+\begin{align*}
+  \frac{1}{\sum x_2^2(1-r^2_{12})}
+\end{align*}
+
+となるので$var(\hat{\gamma})=\sigma^2(\underline{X}^{'}\underline{X})^{-1}$より
+
+\begin{align*}
+  var(\hat{\beta_1})=\frac{\sigma^2}{\sum x_1^2(1-r^2_{12})}
+\end{align*}
+
+\begin{align*}
+  var(\hat{\beta_2})=\frac{\sigma^2}{\sum x_2^2(1-r^2_{12})}
+\end{align*}
+
+\begin{align*}
+  cov(\hat{\beta_1},\hat{\beta_2})=\frac{-\sum x_1x_2\sigma^2}{\sum x_1^2\sum x_2^2(1-r^2_{12})}
+\end{align*}
+
+### 相関行列の逆行列とVIFの証明
+
+計画行列を$X=(\begin{array}{cc}X1&X2\end{array})$と分割すれば
+
+\begin{align*}
+  X^{'}X&=
+  \left(
+  \begin{array}{cc}
+     X^{'}_{1}X_{1} & X^{'}_{1}X_{2} \\
+     X^{'}_{2}X_{1} & X^{'}_{2}X_{2}
+  \end{array}
+ \right)
+\end{align*}
+
+\begin{align*}
+  (X^{'}X)^{-1}&=
+  \left(
+  \begin{array}{cc}
+     B_{11} & B_{12} \\
+     B_{21} & B_{22}
+  \end{array}
+ \right)
+\end{align*}
+
+\begin{align*}
+  B_{11}=(X^{'}_{1}X_{1}-X^{'}_{1}X_{2}(X^{'}_{2}X_{2})^{-1}X^{'}_{2}X_{1})^{-1}
+\end{align*}
+
+以下，$X_1$が$n\times 1$のベクトルの場合を考える．この時
+
+\begin{align*}
+  X^{'}_{1}X_{1}=\sum x_1^2
+\end{align*}
+
+\begin{align*}
+  (X_{2}^{'}X_{2})^{-1}X^{'}_{2}X_{1}=X_{1}\mbox{の}X_{2}\mbox{への回帰を取った時の回帰係数}
+\end{align*}
+
+\begin{align*}
+  X_{1}^{'}X_{2}(X_{2}^{'}X_{2})^{-1}X_{2}^{'}X_{1}=X_{1}\mbox{の}X_{2}\mbox{への回帰によって説明される平方和}
+\end{align*}
+
+従って，
+
+\begin{align*}
+  &X_{1}^{'}X_{1}-X_{1}^{'}X_{2}(X_{2}^{'}X_{2})^{-1}X_{2}^{'}X_{1} \\
+  &=X_{1}^{'}(I-X_{2}(X_{2}^{'}X_{2})^{-1}X_{2}^{'})X_{1} \\
+  &=X_{1}^{'}M_{2}X_{1} \\
+  &=X_{1}\mbox{の}X_{2}\mbox{への回帰を取った時の残差平方和} \\
+  &=X_{1}^{'}X_{1}\left(1-\frac{X_{1}^{'}X_{2}(X_{2}^{'}X_{2})^{-1}X_{2}^{'}X_{1}}{X_{1}^{'}X_{1}}\right) \\
+  &=X_{1}^{'}X_{1}(1-R_{1}^{2})
+\end{align*}
+
+ここで，
+
+\begin{align*}
+  R_{1}^{2}=X_{1}\mbox{の}X_{2}\mbox{への回帰をとったときの決定係数}
+\end{align*}
+
+以上の結果より，
+
+\begin{align*}
+  B_{11}=\frac{1}{\sum x_{1}^{2}}\left(\frac{1}{1-R_{1}^{2}}\right) \\
+  var(\hat{\beta_1})=\sigma^{2}B_{11}=\frac{\sigma^2}{\sum x_{1}^{2}}\left(\frac{1}{1-R_{1}^{2}}\right)
+\end{align*}
+
+前式の分散拡大要因$\frac{1}{1-R_{1}^{2}}$は，$X_{1},X_{2},\cdots,X_{k}$の相関行列$R$の逆行列$R^{-1}$の$(1,1)$要素に等しいことを以下で示す．
+
+\begin{align*}
+  m_{ij}=\sum^{n}_{t=1}x_{it}x_{jt}
+\end{align*}
+
+\begin{align*}
+  A=
+  \left[
+  \begin{array}{cccccc}
+     m_{11} & & & & & \\
+     & m_{22} & & & \Huge{0} & \\
+     & & \ddots & & & \\
+     & & & \ddots & & \\
+     & \Huge{0} & & & \ddots & \\
+     & & & & & m_{kk}
+  \end{array}
+ \right]=
+ \left(
+  \begin{array}{cc}
+     A_{1} & o^{'} \\
+     o & A_{2}
+  \end{array}
+ \right)
+\end{align*}
+
+\begin{align*}
+  A^{-\frac{1}{2}}=
+  \left[
+  \begin{array}{cccccc}
+     \frac{1}{\sqrt{m_{11}}} & & & & & \\
+     & \frac{1}{\sqrt{m_{22}}} & & & \Huge{0} & \\
+     & & \ddots & & & \\
+     & & & \ddots & & \\
+     & \Huge{0} & & & \ddots & \\
+     & & & & & \frac{1}{\sqrt{m_{kk}}}
+  \end{array}
+ \right]=
+ \left(
+  \begin{array}{cc}
+     A_{1}^{-\frac{1}{2}} & o^{'} \\
+     o & A_{2}^{-\frac{1}{2}}
+  \end{array}
+ \right)
+\end{align*}
+
+が得られる．\
+
+$X_{1},X_{2},\cdots,X_{k}$の相関行列を
+
+\begin{align*}
+  R&=\{r_{ij}\},\ i,j=1,2,\cdots,k \\
+  r_{ij}&=\frac{m_{ij}}{\sqrt{m_{ii}m_{jj}}}
+\end{align*}
+
+とし，$A$の分割に対応して$R$も
+
+\begin{align*}
+  R=
+  \left[
+  \begin{array}{cc}
+     R_{11} & R_{12} \\
+     R_{21} & R_{22}
+  \end{array}
+ \right]
+\end{align*}
+
+\begin{align*}
+  R^{-1}=
+  \left[
+  \begin{array}{cc}
+     R^{11} & R^{12} \\
+     R^{21} & R^{22}
+  \end{array}
+ \right]
+\end{align*}
+
+と分割する．そして，
+
+\begin{align*}
+  R^{11}&=(R_{11}-R_{12}R^{-1}_{22}R_{21})^{-1} \\
+  &=(1-R_{12}R^{-1}_{22}R_{21})^{-1}
+\end{align*}
+
+\begin{align*}
+  R_{12}&=
+  \left(
+  \begin{array}{cccc}
+     r_{12} & r_{13} & \cdots & r_{1k}
+  \end{array}
+ \right) \\
+ &=\left(
+  \begin{array}{cccc}
+     \frac{m_{12}}{\sqrt{m_{11}m_{22}}} & \frac{m_{13}}{\sqrt{m_{11}m_{33}}} & \cdots & \frac{m_{1k}}{\sqrt{m_{11}m_{kk}}}
+  \end{array}
+ \right) \\
+ &=\frac{1}{\sqrt{m_{11}}}
+ \left(
+  \begin{array}{cccc}
+     m_{12} & m_{13} & \cdots & m_{1k}
+  \end{array}
+ \right)
+ \left(
+  \begin{array}{cccccc}
+     \frac{1}{\sqrt{m_{11}}} & & & & & \\
+     & \frac{1}{\sqrt{m_{22}}} & & & \Huge{0} & \\
+     & & \ddots & & & \\
+     & & & \ddots & & \\
+     & \Huge{0} & & & \ddots & \\
+     & & & & & \frac{1}{\sqrt{m_{kk}}}
+  \end{array}
+ \right) \\
+ &=A_{1}^{-\frac{1}{2}}(X_{1}^{'}X_{2})A_{2}^{-\frac{1}{2}}
+\end{align*}
+
+同様に
+
+\begin{align*}
+  R_{22}=A_{2}^{-\frac{1}{2}}(X_{2}^{'}X_{2})A_{2}^{-\frac{1}{2}}
+\end{align*}
+
+従って，
+
+\begin{align*}
+  A_{1}^{-\frac{1}{2}}=\frac{1}{\sqrt{m_{11}}}
+\end{align*}
+
+であるから，
+
+\begin{align*}
+  &R_{12}R_{22}^{-1}R_{21} \\
+  &=A_{1}^{-\frac{1}{2}}(X_{1}^{'}X_{2})A_{2}^{-\frac{1}{2}}A_{2}^{\frac{1}{2}}(X_{1}^{'}X_{2})^{-1}A_{2}^{\frac{1}{2}}A_{2}^{-\frac{1}{2}}(X_{2}^{'}X_{1})A_{1}^{-\frac{1}{2}} \\
+  &=A_{1}^{-\frac{1}{2}}(X_{1}^{'}X_{2})(X_{1}^{'}X_{2})^{-1}(X_{2}^{'}X_{1})A_{1}^{-\frac{1}{2}} \\
+  &=\frac{1}{m_{11}}(X_{1}^{'}X_{2})(X_{1}^{'}X_{2})^{-1}(X_{2}^{'}X_{1}) \\
+  &=\frac{X_{1}^{'}X_{2}(X_{1}^{'}X_{2})^{-1}X_{2}^{'}X_{1}}{X_{1}^{'}X_{1}} \\
+  &=R_{1}^{2}
+\end{align*}
+
+ゆえに$R^{11}=(1-R_{12}R_{22}^{-1}R_{21})^{-1}=\frac{1}{1-R_{2}^{2}}$
+，
+
+
+
+
+
+### 多重共線性の尺度-状態数，状態指標
+
+### リッジ推定量のバイアス導出
+
+\begin{align*}
+  (X^{'}X+cI)^{-1}(X^{'}X+cI)=I
+\end{align*}
+
+であるから，
+
+\begin{align*}
+  (X^{'}X+cI)^{-1}X^{'}X=I-c(X^{'}X+cI)^{-1} \\
+  W=I-c(X^{'}X+cI)^{-1}
+\end{align*}
+
+従って，上式を使用し
+
+\begin{align*}
+  B(\hat{\beta_R})&=E[\hat{\beta_R}]-\beta \\
+  &=(W-I)\beta \\
+  &=-c(X^{'}X+cI)^{-1}\beta
+\end{align*}
+
+### $var(\hat{\beta})-var(\hat{\beta_R})$が正値定符号の証明
+
+まず，$A$，$B$ともに$k\times k$の平方行列で$A=A^{'}$，$B=B^{'}$，$A$と$B$は非特異とする．この時$A-B$が正値定符号ならば$B^{-1}-A^{-1}$も正値定符号であることを示す．$Q$を
+
+\begin{align*}
+  Q^{'}(A-B)Q=I
+\end{align*}
+
+となる非特異行列とする．$P$を
+
+\begin{align*}
+  P^{'}(Q^{'}AQ)P=D_1，\ D_1=diag(d_{ii}^{(1)})
+\end{align*}
+
+となる直交行列とする．この時，
+
+\begin{align*}
+  P^{'}(Q^{'}BQ)P&=P^{'}(Q^{'}AQ)P-P^{'}IP \\
+  &=D_1-I
+\end{align*}
+
+であるから，$P^{'}(Q^{'}BQ)P$も対角行列であり，$D_2$とする．
+
+\begin{align*}
+  D_2=D_1-I \\
+  D_1-D_2=I
+\end{align*}
+
+が得られる．$D_1=diag(d_{ii}^{(1)})$，$D_2=diag(d_{ii}^{(2)})$とすれば
+
+\begin{align*}
+  d_{ii}^{(1)}-d_{ii}^{(2)}=1
+\end{align*}
+
+すなわち
+
+\begin{align*}
+  d_{ii}^{(1)}>d_{ii}^{(2)}
+\end{align*}
+
+を得る．\
+これより，$d_{ii}^{(1)}\neq0$，$d_{ii}^{(2)}\neq0$であるから
+
+\begin{align*}
+  \frac{1}{d_{ii}^{(2)}}>\frac{1}{d_{ii}^{(1)}}，\ i=1,\cdots,k
+\end{align*}
+
+従って，
+
+\begin{align*}
+  D_{2}^{-1}-D_{1}^{-1}=D_{3}
+\end{align*}
+
+とすると
+
+\begin{align*}
+  d_{33}^{(i)}=\frac{1}{d_{ii}^{(2)}}-\frac{1}{d_{ii}^{(1)}}>0，\ i=1,\cdots,k
+\end{align*}
+
+となるから，$D_3$は正定値行列である．ところが
+
+\begin{align*}
+  D_{2}^{-1}-D_{1}^{-1}&=(P^{'}Q^{'}BQP)^{-1}-(P^{'}Q^{'}AQP)^{-1} \\
+  &=P^{'}Q^{-1}B^{-1}(Q^{-1})^{'}P-P^{'}Q^{-1}A^{-1}(Q^{-1})^{'}P
+\end{align*}
+
+であるから，$C=P^{'}Q^{'}$とおき，上式の両辺に左から$C^{'}$，右から$C$をかけると
+
+\begin{align*}
+  C^{'}(D_{2}^{-1}-D_{1}^{-1})C&=QPP^{'}Q^{-1}B^{-1}(Q^{-1})^{'}PP^{'}Q^{'}-QPP^{'}Q^{-1}A^{-1}(Q^{-1})^{'}PP^{'}Q^{'} \\
+  &=B^{-1}-A^{-1}
+\end{align*}
+
+となる．$D_{2}^{-1}-D_{1}^{-1}$が正定値行列であるから，非特異行列$C$をかけた上式左辺も正定値行列である．ゆえに$B^{-1}-A^{-1}$は正定値行列である．
+
+\begin{align*}
+var(\hat{\beta})&=\sigma^{2}(X^{'}X)^{-1} \\
+var(\hat{\beta_R})&=\sigma^{2}(X^{'}X+cI)^{-1}X^{'}X(X^{'}X+cI)^{-1}
+\end{align*}
+
+であるから
+
+\begin{align*}
+A&=(X^{'}X+cI)(X^{'}X)^{-1}(X^{'}X+cI)^{-1} \\
+B&=X^{'}X
+\end{align*}
+
+とおくと，$A-B$が正定値行列を証明できれば，$var(\hat{\beta})-var(\hat{\beta_R})=\sigma^2(B^{-1}-A^{-1})$が正定値行列である．
+
+\begin{align*}
+A-B&=(X^{'}X+cI)(X^{'}X)^{-1}(X^{'}X+cI)-X^{'}X \\
+&=(I+c(X^{'}X)^{-1})(X^{'}X+cI)-X^{'}X \\
+&=X^{'}X+cI+c+c^{2}(X^{'}X)^{-1}-X^{'}X \\
+&=2cI+C^{2}(X^{'}X)^{-1}
+\end{align*}
+
+ゆえに$Z\neq0$に対して
+
+\begin{align*}
+Z^{'}(A-B)Z&=Z^{'}(2cI+C^{2}(X^{'}X)^{-1})Z \\
+&=2cZ^{'}Z+c^{2}Z^{'}(X^{'}X)^{-1}Z>0
+\end{align*}
+
+すなわち$A-B$は正定値行列．故に$var(\hat{\beta})-var(\hat{\beta_R})$は正定値行列．
+
+### $MSE(\hat{\beta_R})$の証明
+
+$A$を$k\times k$の非特異行列，$\lambda$を$A$の固有値とすれば
+
+\begin{align*}
+Ax=\lambda x\ \ (\lambda\neq 0)
+\end{align*}
+
+の関係がある．この時，次の関係(I)，(II)，(III)が成立．\
+
+(I)\ $A^{-1}$の固有値は$1/\lambda$\
+\ \ $Ax=\lambda x$より，$x=\lambda A^{-1}x$．
+
+\begin{align*}
+\frac{1}{\lambda}x=A^{-1}x
+\end{align*}
+
+(II)\ $A+cI$の固有値は$\lambda+c$\
+
+\begin{align*}
+(A+cI)x=Ax+cx=\lambda x+cx=(\lambda+c)x
+\end{align*}
+
+(III)\ (I)と(II)を使えば$(A+cI)^{-1}$の固有値は$1/(\lambda+c)$となる\
+
+$A$を対角化し，対角要素に$A$の固有値を与える直交行列$P$は，$A^{-1}$，$A+cI$，$(A+cI)^{-1}$をも対角化し，対角要素に固有値を与える行列．すなわち
+
+\begin{align*}
+P^{'}AP&=\Lambda=
+\left[
+\begin{array}{cccc}
+     \lambda_1 & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \lambda_k
+  \end{array}
+\right] \\
+P^{'}P&=I
+\end{align*}
+
+とすれば，上の(I)，(II)，(III)は次の関係である．\
+
+(I)\ $P^{'}AP=\Lambda$より，\
+
+\begin{align*}
+A&=P\Lambda P^{'} \\
+A^{-1}&=P\Lambda^{-1}P^{'}
+\end{align*}
+
+ゆえに
+
+\begin{align*}
+P^{'}A^{-1}P=\Lambda^{-1}=
+\left[
+\begin{array}{cccc}
+     \frac{1}{\lambda_1} & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \frac{1}{\lambda_k}
+  \end{array}
+\right]
+\end{align*}
+
+(II) \
+
+\begin{align*}
+&P^{'}(A+cI)P \\
+&=P^{'}AP+cP^{'}P \\
+&=\Lambda+cI=
+\left[
+\begin{array}{cccc}
+     \lambda_1+c & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \lambda_k+c
+  \end{array}
+\right]
+\end{align*}
+
+(III)\ (II)より \ 
+
+\begin{align*}
+A+cI=P(\Lambda+cI)P^{'}
+\end{align*}
+
+ゆえに，
+
+\begin{align*}
+(A+cI)^{-1}=P(\Lambda+cI)^{-1}P^{'}
+\end{align*}
+
+従って，
+
+\begin{align*}
+P^{'}(A+cI)^{-1}P=(\Lambda+cI)^{-1}
+\left[
+\begin{array}{cccc}
+     \frac{1}{\lambda_1+c} & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \frac{1}{\lambda_k+c}
+  \end{array}
+\right]
+\end{align*}
+
+これらの結果を用いれば，$X^{'}X=A$と置くことで
+
+\begin{align*}
+(X^{'}X+cI)^{-1}=P(\Lambda+cI)^{-1}P^{'}
+\end{align*}
+
+従って，
+
+\begin{align*}
+tr[(X^{'}X+cI)^{-1}]&=tr[P(\Lambda+cI)^{-1}P^{'}] \\
+&=tr[(\Lambda+cI)^{-1}P^{'}P] \\
+&=tr[(\Lambda+cI)^{-1}]
+\end{align*}
+
+を得る．ゆえに
+
+\begin{align*}
+&tr[(X^{'}X+cI)^{-1}X^{'}X(X^{'}X+cI)^{-1}] \\
+&=tr\{[I-c(X^{'}X+cI)^{-1}](X^{'}X+cI)^{-1}\} \\
+&=tr[(X^{'}X+cI)^{-1}-c(X^{'}X+cI)^{-2}] \\
+&=tr[(X^{'}X+cI)^{-1}]-ctr[(X^{'}X+cI)^{-2}] \\
+&=\sum_{i=1}^{k}\left(\frac{1}{\lambda_i+c}\right)-c\sum_{i=1}^{k}\left(\frac{1}{(\lambda_i+c)^{2}}\right) \\
+&=\sum_{i=1}^{k}\left(\frac{\lambda_i}{(\lambda_i+c)^{2}}\right)
+\end{align*}
+
+$\alpha=P^{'}\beta$とおけば$\beta=P\alpha$なので
+
+\begin{align*}
+&\beta^{'}(X^{'}X+cI)^{-2}\beta \\
+&=\alpha^{'}[P^{'}(x^{'}X+cI)^{-2}P]\alpha \\
+&=\alpha^{'}(\Lambda+cI)^{-2}\alpha \\
+&=\sum_{i=1}^{k}\frac{\alpha_i^2}{(\lambda_i+c)^{2}}
+\end{align*}
+
+上記より，
+
+\begin{align*}
+MSE(\hat{\beta_R})=\sigma^{2}\sum_{i=1}^{k+1}\frac{\lambda_i}{(\lambda_i+c)^{2}}+c^{2}\sum_{i=1}^{k+1}\frac{\alpha^{2}_{i}}{(\lambda_i+c)^{2}}
+\end{align*}
+
+### $SSE_R$第2項の証明
+
+$P$を
+
+\begin{align*}
+P^{'}(X^{'}X)P=\Lambda
+\end{align*}
+
+となる直交行列とする．ここで$\Lambda=diag(\lambda_1,\cdots,\lambda_{k+1})$，$\lambda_j$は$X^{'}X$の固有値である．この$P$を用いると$W$は
+
+\begin{align*}
+W&=(X^{'}X+cI)^{-1}X^{'}X \\
+&=(P\Lambda P^{'}+cI)^{-1}P\Lambda P^{'} \\
+&=[P(\Lambda+cI)P^{'}]^{-1}P\Lambda P^{'} \\
+&=P(\Lambda+cI)^{-1}P^{'}P\Lambda P^{'} \\
+&=P(\Lambda+cI)^{-1}\Lambda P^{'}
+\end{align*}
+
+そして，
+
+\begin{align*}
+\Delta=(\Lambda+cI)^{-1}\Lambda&=
+\left[
+\begin{array}{cccc}
+     \frac{1}{\lambda_1+c} & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \frac{1}{\lambda_{k+1}+c}
+  \end{array}
+\right]
+\left[
+\begin{array}{cccc}
+     \lambda_1 & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \lambda_{k+1}
+  \end{array}
+\right] \\
+&=
+\left[
+\begin{array}{cccc}
+     \frac{\lambda_1}{\lambda_1+c} & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \frac{\lambda_{k+1}}{\lambda_{k+1}+c}
+  \end{array}
+\right]
+\left[
+\begin{array}{cccc}
+     \delta_1 & & & \\
+     & \ddots & & \\
+     & & \ddots & \\
+     & & & \delta_{k+1}
+  \end{array}
+\right]
+\end{align*}
+
+とおくと
+
+\begin{align*}
+W=P\Delta P^{'}
+\end{align*}
+
+この結果を用いると
+
+\begin{align*}
+\hat{\beta_R}-\hat{\beta}=(W-I)\hat{\beta}=(P\Delta P^{'}-I)\hat{\beta}
+\end{align*}
+
+となるから，式(12)の右辺第2項は
+
+\begin{align*}
+&(\hat{\beta_R}-\hat{\beta})^{'}X^{'}X(\hat{\beta_R}-\hat{\beta}) \\
+&=\hat{\beta}^{'}(P\Delta P^{'}-I)^{'}P\Lambda P^{'}(P\Delta P^{'}-I)\hat{\beta} \\
+&=\hat{\beta}^{'}[P\Delta\Lambda P^{'}-P\Lambda P^{'}][P\Delta P^{'}-I]\hat{\beta} \\
+&=\hat{\beta}^{'}[P\Delta^{2}\Lambda P^{'}-P\Delta\Lambda P^{'}-P\Delta\Lambda P^{'}+P\Lambda P^{'}]\hat{\beta} \\
+&=\hat{\beta}^{'}P(\Delta^{2}\Lambda-2\Delta\Lambda+\Lambda)P^{'}\hat{\beta}
+\end{align*}
+
+対角行列$\Delta^{2}\Lambda-2\Delta\Lambda+\Lambda$の$(i,i)$要素は
+
+\begin{align*}
+&\delta^{2}_{i}\lambda_{i}-2\delta_{i}\lambda_{i}+\lambda_{i} \\
+&=\lambda_{i}(\delta^{2}_{i}-2\delta_{i}+1) \\
+&=\lambda_{i}(\delta_{i}-1)^{2} \\
+&=\lambda_{i}\left(\frac{\lambda_{i}}{\lambda_i+c}-\frac{\lambda_i+c}{\lambda_i+c}\right)^{2} \\
+&=\lambda_{i}\left(\frac{-c}{\lambda_i+c}\right)^{2}=\lambda_i\frac{c^{2}}{(\lambda_i+c)^{2}}=\frac{c^2\lambda_i}{(\lambda_i+c)^{2}}>0
+\end{align*}
+
+そして，
+
+\begin{align*}
+  \frac{d}{dc}\left[\frac{c^{2}\lambda_{i}}{(c+\lambda_{i})^{2}}\right]&=\frac{2c\lambda_{i}(c+\lambda_{i})^{2}-2c^{2}\lambda_{i}(c+\lambda_{i})}{(c+\lambda_i)^{4}} \\
+  &=\frac{2c\lambda_{i}(c+\lambda_{i})-2c^{2}\lambda_{i}}{(c+\lambda_i)^{3}} \\
+  &=\frac{2c^{2}\lambda_{i}+2c\lambda_{i}^{2}-2c^{2}\lambda_{i}}{(c+\lambda_i)^{3}} \\
+  &=\frac{2c\lambda_{i}^{2}}{(c+\lambda_i)^{3}}>0
+\end{align*}
+
+従って，$\Delta^{2}\Lambda-2\Delta\Lambda+\Lambda$は$c>0$に対して正値定符号であり，$c$の増加関数である．
+
+### マローズの$C_p$基準の導出
+
+リッジ回帰の被説明変数の推定値を
+
+\begin{align*}
+  \hat{y_R}=X\hat{\beta_R}=X^{\ast}\hat{\beta_R^{\ast}}
+\end{align*}
+
+とする．$i$番目の要素で表せば
+
+\begin{align*}
+  \hat{Y_{Ri}}&=x_{i}^{\ast '}\hat{\beta_R^{\ast}},\ \ i=1,2,\cdots,n \\
+  x_{i}^{\ast '}&=
+  \left(
+\begin{array}{cccc}
+     1 & Z_{1i} & \cdots & Z_{ki}
+  \end{array}
+\right)
+\end{align*}
+
+である．
+
+\begin{align*}
+  MSE(\hat{Y_{Ri}})&=E[(\hat{Y_{Ri}}-Y_{Ri})^{2}] \\
+  &=E[\{(\hat{Y_{Ri}}-E[\hat{Y_{Ri}}])+(E[\hat{Y_{Ri}}]-Y_{Ri})\}^{2}] \\
+  &=var(\hat{Y_{Ri}})+B(\hat{Y_{Ri}})^{2}
+\end{align*}
+
+よって，
+
+\begin{align*}
+  \sum_{i=1}^{n}MSE(\hat{Y_{Ri}})=\sum_{i=1}^{n}var(\hat{Y_{Ri}})+\sum_{i=1}^{n}[B(\hat{Y_{Ri}})]^{2}
+\end{align*}
+
+そして，
+
+\begin{align*}
+  var(\hat{y_R})=X^{\ast}var(\hat{\beta_R^{\ast}})X^{\ast '}
+\end{align*}
+
+であるから
+
+\begin{align*}
+  \sum_{i=1}^{n}var(\hat{y_R})&=tr[X^{\ast}var(\hat{\beta_R^{\ast}})X^{\ast '}] \\
+  &=tr[X^{\ast}\sigma^{2}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}] \\
+  &=\sigma^{2}tr[X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}]^{2} \\
+  &=\sigma^{2}tr(A_c)^{2}
+\end{align*}
+
+ここで
+
+\begin{align*}
+  A_c=X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}
+\end{align*}
+
+とする．
+
+\begin{align*}
+  &tr(A_c) \\
+  &=tr\left(
+  \left[
+    \begin{array}{cc}
+      (n+c)^{-1} & 0 \\
+      0 & (Z^{'}Z+cI)^{-1}
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{cc}
+      n & o^{'} \\
+      o & Z^{'}Z
+    \end{array}
+  \right]
+  \right) \\
+  &=tr\left(
+  \left[
+    \begin{array}{cc}
+      \frac{n}{n+c} & 0 \\
+      0 & (Z^{'}Z+cI)^{-1}Z^{'}Z
+    \end{array}
+  \right]
+  \right) \\
+  &=\frac{n}{n+c}+tr[(Z^{'}Z+cI)^{-1}Z^{'}Z] \\
+  &=\frac{n}{n+c}+tr(H_c)
+\end{align*}
+
+ここで
+
+\begin{align*}
+  H_c=Z(Z^{'}Z+cI)^{-1}Z^{'}
+\end{align*}
+
+次にリッジ回帰の残差ベクトルを$e_R$とすれば
+
+\begin{align*}
+  e_R&=y-\hat{y_R} \\
+  &=y-X^{\ast}\hat{\beta_R^{\ast}} \\
+  &=y-X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}y \\
+  &=[I-X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}]y \\
+  &=(I-A_c)y
+\end{align*}
+
+従って，リッジ回帰の残差平方和$SSE_R$は次のように表せる．
+
+\begin{align*}
+  SSE_R=e_R^{'}e_R=y^{'}(I-A_c)^{2}y
+\end{align*}
+
+ゆえに
+
+\begin{align*}
+  E[SSE_R]&=E[y^{'}(I-A_c)^{2}y] \\
+  &=E[(X\beta+u)^{'}(I-A_c)^{2}(X\beta+u)] \\
+  &=E[u^{'}(I-A_c)^{2}u]+(X\beta)^{'}(I-A_c)^{2}(X\beta)
+\end{align*}
+
+\begin{align*}
+  B(\hat{y_R})=E[\hat{y_R}]-E[y]
+\end{align*}
+
+\begin{align*}
+  E[\hat{y_R}]&=E[X^{\ast}\hat{\beta^{\ast}_R}] \\
+  &=X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}X\beta
+\end{align*}
+
+\begin{align*}
+  E[y]=X\beta
+\end{align*}
+
+故に
+
+\begin{align*}
+  B(\hat{y_R})&=-[I-X^{\ast}(X^{\ast '}X^{\ast}+cI)^{-1}X^{\ast '}]X\beta \\
+  &=-(I-A_c)X\beta
+\end{align*}
+
+従って，
+
+\begin{align*}
+  \sum_{i=1}^{n}[B(\hat{y_R})]^{2}&=[B(\hat{y_R})]^{'}[B(\hat{y_R})] \\
+  &=(X\beta)^{'}(I-A_c)^{2}(X\beta)
+\end{align*}
+
+以上より，$\sum_{i=1}^{n}[B(\hat{y_R})]^{2}$の不偏推定量は
+
+\begin{align*}
+  SSE_R-\sigma^{2}tr(I-A_c)^{2}
+\end{align*}
+
+によって与えられることが分かる．以上の結果より
+
+\begin{align*}
+  &\frac{1}{\sigma^2}\sum^{n}_{i=1}MSE(\hat{Y_{Ri}}) \\
+  &=\frac{1}{\sigma^{2}}\sum^{n}_{i=1}var(\hat{Y_{Ri}})+\frac{1}{\sigma^{2}}\sum^{n}_{i=1}[B(\hat{Y_{Ri}})]^{2}
+\end{align*}
+
+の推定量$C_p$は
+
+\begin{align*}
+  C_p&=tr(A_c)^{2}+\frac{SSE_R}{s^{2}}-tr(I-A_c)^{2} \\
+  &=\frac{SSE_R}{s^{2}}+tr(A_c)^{2}-[tr(I)-2tr(A_c)+tr(A_c)^{2}] \\
+  &=\frac{SSE_R}{s^{2}}-n+2tr(A_c) \\
+  &=\frac{SSE_R}{s^{2}}-n+2\left[\frac{n}{n+c}+tr(H_c)\right]
+\end{align*}
+
+あるいは，
+
+\begin{align*}
+  tr(H_c)=tr[(Z^{'}Z+cI)^{-1}Z^{'}Z]=\sum_{i=1}^{k}\left(\frac{\lambda_i}{\lambda_i+c}\right)
+\end{align*}
+
+と書くことができるので
+
+\begin{align*}
+  C_p=\frac{SSE_R}{s^{2}}-n+\frac{2n}{n+c}+2\sum^{k}_{i=1}\left(\frac{\lambda_i}{\lambda_i+c}\right)
+\end{align*}
+
+となる．
+
+
+
+
