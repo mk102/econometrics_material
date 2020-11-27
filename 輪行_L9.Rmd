@@ -1,0 +1,96 @@
+---
+title: "影響点とその対処法(頑健回帰推定法)"
+author: "川上 幹男"
+date: "2020/12/04"
+header_includes:
+- \usepackage{bm}
+output:
+  pdf_document: 
+    latex_engine: lualatex 
+    toc: true
+    
+documentclass: ltjsarticle
+---
+
+## 影響分析とは
+
+## クックのD
+
+## L-Rプロット
+
+## M推定量
+
+回帰モデルを
+
+\begin{align*}
+Y_i=x_{i}^{'}\beta+\epsilon_{i},\ i=1,\cdots,n　\tag{1}
+\end{align*}
+
+とする．ここで$1\times k$ベクトル
+
+\begin{align*}
+x_{i}^{'}=
+\left(
+  \begin{array}{cccc}
+    1 & X_{2i} & \cdots & X_{ki}
+  \end{array}
+\right)
+\end{align*}
+
+は所与，確率誤差項$\epsilon_i$は$E(\epsilon_i)=0$と仮定する．ここで$\beta$のM推定量は
+
+\begin{align*}
+min\sum_{i=1}^{n}\rho(Y_{i}-x_{i}^{'}\beta) \tag{2}
+\end{align*}
+
+の解と表現される．最小2乗推定量(OLSE)は
+
+\begin{align*}
+  \rho(u)=\frac{u^{2}}{2} \tag{3}
+\end{align*}
+
+のM推定量である．すなわち，
+
+\begin{align*}
+  \sum_{i=1}^{n}\rho(Y_{i}-x^{'}_{i}\beta)=\frac{1}{2}\sum_{i=1}^{n}(Y_{i}-x^{'}_{i}\beta)^{2} \tag{4}
+\end{align*}
+
+がOLSの最小にすべき損失関数である．\
+$\rho(u)$は微分可能で，0まわりで対照的な凸関数の時，$\beta$のM推定量を$\hat{\beta_M}$は
+
+\begin{align*}
+  \sum_{i=1}^{n}\rho^{'}(Y_{i}-x^{'}_{i}\hat{\beta_M})x_{i}=\sum_{i=1}{n}\Psi(e_{i})x_{i}=0 \tag{5}
+\end{align*}
+
+の解として得られる．ここで$\rho^{'}(e_{i})=\Psi(e_{i})$，$e_i=Y_i-x_{i}^{'}\hat{\beta_M}$である．\
+OLSは
+
+\begin{align*}
+  \Psi(e_{i})=\rho^{'}(e_{i})=e_{i}
+\end{align*}
+
+であるから，OLSEを求める式は
+
+\begin{align*}
+  \sum^{n}_{i=1}e_{i}x_{i}=0 \tag{6}
+\end{align*}
+
+となる．
+
+## 影響関数
+
+## M推定量の不偏性と漸近的特性
+
+## 崩壊点
+
+## 崩壊点と調整定数
+
+## $\sigma$の推定
+
+## MM推定
+
+## MM推定のアルゴリズム
+
+## 参考文献
+
+## 付録
