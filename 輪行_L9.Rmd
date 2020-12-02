@@ -18,7 +18,13 @@ documentclass: ltjsarticle
 
 ## L-Rプロット
 
-## M推定量
+## 頑健回帰推定とは
+
+外れ値を検出し，外れ値のパラメータ推定値への影響を小さくしようとする方法．以降で説明する加重回帰で考えると，絶対値のおおきな残差にたいしてはウェイトを小さくすれば良い．次節では，頑健回帰推定の1つであるM推定を例に説明する．
+
+## M推定
+
+### OLSEにおけるM推定
 
 回帰モデルを
 
@@ -59,7 +65,7 @@ min\sum_{i=1}^{n}\rho(Y_{i}-x_{i}^{'}\beta) \tag{2}
 $\rho(u)$は微分可能で，0まわりで対照的な凸関数の時，$\beta$のM推定量を$\hat{\beta_M}$は
 
 \begin{align*}
-  \sum_{i=1}^{n}\rho^{'}(Y_{i}-x^{'}_{i}\hat{\beta_M})x_{i}=\sum_{i=1}{n}\Psi(e_{i})x_{i}=0 \tag{5}
+  \sum_{i=1}^{n}\rho^{'}(Y_{i}-x^{'}_{i}\hat{\beta_M})x_{i}=\sum_{i=1}^{n}\Psi(e_{i})x_{i}=0 \tag{5}
 \end{align*}
 
 の解として得られる．ここで$\rho^{'}(e_{i})=\Psi(e_{i})$，$e_i=Y_i-x_{i}^{'}\hat{\beta_M}$である．\
@@ -75,11 +81,419 @@ OLSは
   \sum^{n}_{i=1}e_{i}x_{i}=0 \tag{6}
 \end{align*}
 
-となる．
+となる．ウェイト関数$w(u)$を
+
+\begin{align*}
+  w(u)=\frac{\Psi(u)}{u} \tag{7}
+\end{align*}
+
+と定義すれば，式(5)は
+
+\begin{align*}
+  \sum_{i=1}^{n}w_{i}(e_{i})e_{i}x_{i}=\sum^{n}_{i=1}w_{i}e_{i}x_{i}=0 \tag{8}
+\end{align*}
+
+と表すことができる．$w_{i}=w_{i}(e_{i})$であり，ウェイトは残差$e_{i}$に依存．
+
+### 加重最小2乗推定量
+
+式(8)は加重最小2乗推定量(weighted least-squares estimator)WLSEの解を与える．ここで$\hat{\beta_W}$を$\beta$のWLSEとすれば，$\hat{\beta_W}$は
+
+\begin{align*}
+  \sum^{n}_{i=1}w_{i}e_{i}^{2}=\sum^{n}_{i=1}w_{i}(Y_{i}-x_{i}^{'}\hat{\beta_W})^{2}
+\end{align*}
+
+を最小にするので
+
+\begin{align*}
+  \frac{d\sum w_{i}e_{i}^{2}}{d\hat{\beta_W}}=0
+\end{align*}
+
+すなわち
+
+\begin{align*}
+  \sum_{i=1}^{n}w_{i}e_{i}x_{i}=0
+\end{align*}
+
+の解でなければならない．式(8)は
+
+\begin{align*}
+  \sum(Y_{i}-x_{i}^{'}\hat{\beta_M})w_{i}x_{i}=0 \tag{9}
+\end{align*}
+
+すなわち
+
+\begin{align*}
+  \sum^{n}_{i=1}x_{i}w_{i}x_{i}^{'}\hat{\beta_M}=\sum_{i=1}^{n}x_{i}w_{i}Y_{i} \tag{10}
+\end{align*}
+
+と表現できる．行列で表わすと式(10)は次のような加重最小2乗法の正規方程式を与える．
+
+\begin{align*}
+  X^{'}WX\hat{\beta_M}=X^{'}Wy \tag{11}
+\end{align*}
+
+ここで$X$は$n\times k$，$y$は$n\times 1$，$\hat{\beta_M}$は$k\times 1$，$W$は
+
+\begin{align*}
+  W=
+  \left[
+\begin{array}{cccc}
+     w_1 & & & \\
+     & w_2 & & \\
+     & & \ddots & \\
+     & & & w_{n}
+  \end{array}
+\right]
+=diag\{w_i\}
+\end{align*}
+
+によって与えられる$n\times n$の対角行列である．式(11)より
+
+\begin{align*}
+  \hat{\beta_M}=(X^{'}WX)^{-1}X^{'}Wy \tag{12}
+\end{align*}
+
+が得られる．すなわち，$\Psi$関数を用いる$\beta$のM推定量はウェイト$w_{i}$は式(7)によって与えられるWLSEとして求めることができる．\
+OLSのとき
+
+\begin{align*}
+  \Psi(e_{i})=e_{i}
+\end{align*}
+
+であるから
+
+\begin{align*}
+  w_{i}=\frac{\Psi(e_{i})}{e_i}=1,\ \ i=1,\cdots,n
+\end{align*}
+
+である．すなわち加重回帰の観点から見ると，OLSはすべての残差に等ウェイト1を与える．\
+頑健回帰推定を加重回帰で考えると，絶対値の大きな残差に対してはウェイトを小さくすれば良い．ところが残差$e_i$の大きさは被説明変数の単位に依存しているため，$e_i$の水準によって外れ値かどうかを判断することはできない．そこで$e_i$と同じ単位をもつ誤差項の標準偏差$\sigma$で割り，標準化された残差$e_{i}/\sigma$を考えると，$\sigma$は定数であるから，式(5)は
+
+\begin{align*}
+  \sum_{i=1}^{n}\Psi(\frac{e_{i}}{\sigma})x_i=0 \tag{13}
+\end{align*}
+
+と同等である．$u_{i}=e_{i}/\sigma$とおけば，上式は
+
+\begin{align*}
+  \sum_{i=1}^{n}\Psi(u_{i})x_i=0 \tag{14}
+\end{align*}
+
+に等しく，式(14)は
+
+\begin{align*}
+  w_{i}=\frac{\Psi(u_i)}{u_i}
+\end{align*}
+
+とすれば
+
+\begin{align*}
+  \sum^{n}_{i=1}w_{i}u_{i}x_{i}=0
+\end{align*}
+
+と同等である．
+
+### Huberの$\Psi$
+
+頑健回帰推定の例としてHuberの$\Psi$を取り上げる．Huberの$\Psi$関数は次式で与えれられる．
+
+\begin{align*}
+  \Psi(u_i) = \tag{15}
+  \left\{
+  \begin{array}{ll}
+  u_{i} & |u_i|\leq H \\
+  H & u_{i}>H \\
+  -H & u_i<-H
+  \end{array}
+  \right.
+\end{align*}
+
+損失関数$\rho$で示すと次の関数である．
+
+\begin{align*}
+  \rho(u_i) = \tag{16}
+  \left\{
+  \begin{array}{ll}
+  \frac{u_{i}^{2}}{2} & |u_i|\leq H \\
+  H|u_{i}|-\frac{H^{2}}{2} & |u_i|>H
+  \end{array}
+  \right.
+\end{align*}
+
+ウェイトで示せばHuberの$\Psi$関数は
+
+\begin{align*}
+  \rho(u_i) = \tag{17}
+  \left\{
+  \begin{array}{ll}
+  1 & |u_i|\leq H \\
+  \frac{H}{|u_i|} & |u_i|>H
+  \end{array}
+  \right.
+\end{align*}
+
+Huberの$\Psi(u_i)$と，OLSの$\Psi(u_i)=u_i$をグラフで示したのは以下．上図はx軸に標準化残差，y軸に$\Psi$関数．下図はx軸に標準化残差，y軸にウェイト．
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(patchwork)
+
+H = 1.345
+u <- seq(-3, 3, 0.01)
+
+psi_ols <- u
+psi_huber <- u %>% 
+  replace(which(u < -H), -H) %>% 
+  replace(which(u > H), H) 
+
+tmp <- tibble(
+  u = u,
+  OLS = psi_ols,
+  Huber = psi_huber
+)
+
+g1 <- tmp %>% 
+  pivot_longer(-u) %>% 
+  ggplot(aes(x=u, y=value, group=name, color=name)) +
+  geom_line() 
+
+weight <- psi_huber / u
+
+tmp <- tibble(
+  u = u,
+  OLS = 1,
+  Huber = weight
+)
+
+g2 <- tmp %>% 
+  pivot_longer(-u) %>% 
+  ggplot(aes(x=u, y=value, group=name, color=name)) +
+  geom_line()
+
+
+g1
+g2
+  
+```
+
 
 ## 影響関数
 
+OLSは外れ値に対しても他の残差と同じウェイト($w_i=1$)を与え，外れ値に無防備であることは前節で述べた．推定量が観測値に対してどのように反応するかを調べる影響関数(influence function)という概念をここで紹介する．\
+$z_1,z_2,\cdots,z_n$を分布関数$F$からの無作為標本とし，あるパラメータ$T(F)$の推定量を
+
+\begin{align*}
+  T_n=T_n(z_1,z_2,\cdots,z_n)
+\end{align*}
+
+とする．そして$F_n$を$n$個の$z_1,z_2,\cdots,z_n$にもとづく経験的分布関数とする．また
+
+\begin{align*}
+  T_n=T_n(z_1,z_2,\cdots,z_n)=T(F_n)
+\end{align*}
+
+と表し
+
+\begin{align*}
+  T(F_n)\overset{p}{\longrightarrow}T(F)
+\end{align*}
+
+推定量$T(F_n)$は確率収束すると定義．ここで期待値を例に影響関数を説明する．例えば
+
+\begin{align*}
+  T_n=\frac{1}{n}\sum^{n}_{i=1}z_{i}=\bar{z}
+\end{align*}
+
+とすれば
+
+\begin{align*}
+  T(F)=\int zdF(z)=E(Z)=\mu
+\end{align*}
+
+\begin{align*}
+  T(F_n)=\int zdF_n(z)=\bar{z}
+\end{align*}
+
+である．このとき，極めて大きな無作為標本に1個の観測点$z$が追加される場合，$T$がどのような影響を受ける以下は次の影響関数によって示される．
+
+\begin{align*}
+  IC(z;F,T)=\underset{\epsilon}{\text{lim}}\frac{T[(1-\epsilon)F+\epsilon\delta_z]-T(F)}{\epsilon} \tag{18}
+\end{align*}
+
+ここで$\delta_z$は$z$で1をとり，それ以外では0の値をとる分布関数．分布関数$F_{\epsilon}=(1-\epsilon)F+\epsilon\delta_z$は，$\epsilon$が十分小さく0に近い時ほとんど$F$に等しいが，点$z$で追加的なウェイト$\epsilon\delta_z$をもっている．従って，$T[(1-\epsilon)F+\epsilon\delta_z]-T(F)$は，点$z$における推定量$T_n$の確率収束$T$からのわずかな変化を示しており，$IC$は$\epsilon=0$で評価した$T(F_\epsilon)$の導関数，すなわち
+
+\begin{align*}
+  \left.\frac{dT(F_\epsilon)}{d\epsilon}\right|_{\epsilon=0}
+\end{align*}
+
+である．例えば，$T_n=\bar{z}$とすれば
+
+\begin{align*}
+  T(F)=\mu=\int zdF(z)
+\end{align*}
+
+であるから
+
+\begin{align*}
+  dF_\epsilon=(1-\epsilon)dF+\epsilon d\delta_z
+\end{align*}
+
+に注意すると
+
+\begin{align*}
+  T[(1-\epsilon)F+\epsilon\delta_z]=\int (1-\epsilon)zdF+\int\epsilon zd\delta_z=(1-\epsilon)\mu+\epsilon z
+\end{align*}
+
+従って
+
+\begin{align*}
+  IC(z;F,T)=\underset{\epsilon}{\text{lim}}\frac{(1-\epsilon)\mu+\epsilon z-\mu}{\epsilon}=z-\mu \tag{19}
+\end{align*}
+
+となり，$F$の$z$における小さな変化は推定量の大きな変化を，そして$z$が$\mu$から離れれば離れるほど$z$の影響は大きく，しかも限界のない変化を推定量$\bar{z}$に与える．
+
+### OLSE$\hat{\beta}$の影響関数
+
+次に線形回帰モデル
+
+\begin{align*}
+  y=X\beta+\epsilon
+\end{align*}
+
+における$\beta$の最小2乗推定量$\hat{\beta}$の影響関数を求める．$x^{'}$を$1\times k$のベクトル，$Y$を$1\times 1$のスカラーとし，分布関数$F$のもとで
+
+\begin{align*}
+  E_F(xx^{'})=\Sigma_{XX}(F)
+\end{align*}
+
+\begin{align*}
+  E_F(xY)=\Sigma_{XY}(F)
+\end{align*}
+
+とする．$T(F_n)=\hat{\beta}(F_n)$とすれば
+
+\begin{align*}
+  T(F)=\beta(F)=\Sigma_{XX}^{-1}(F)\Sigma_{XY}(F)
+\end{align*}
+
+であたえられるから，$\beta$のICは次式となる(導出は付録)．
+
+\begin{align*}
+  IC[x^{'},Y;\beta(F)]=\Sigma_{XX}^{-1}(F)x\{Y-x^{'}\beta(F)\} \tag{20}
+\end{align*}
+
+上式$Y-x^{'}\beta(F)$に対応する標本概念は$Y-x^{'}\hat{\beta}=e$である．このことから，$z=(x^{'}\ Y)$の$\hat{\beta}$への影響は限界がないことがわかる．言い換えると$F$の$z$における小さな変化の$\hat{\beta}$への影響は誤差$-x^{'}\beta(F)$（標本対応は残差$e$）に比例的に現れ，限界がない．
+
+### M推定量の影響関数
+
+線形回帰モデルのパラメータ$\beta$のM推定量$\hat{\beta_M}(F)$の影響関数は次式で与えられる(Hampel et al.(1986) p.316)．
+
+\begin{align*}
+  IC[x^{'},Y;\beta_M(F)]=\Psi[Y-x^{'}\beta_M(F)]B^{-1}x \tag{21}
+\end{align*}
+
+ここで
+
+\begin{align*}
+  B=\int\Psi^{'}[Y-x^{'}\beta_M(F)]xx^{'}dF(x,Y)
+\end{align*}
+
+M推定量の影響関数は$\beta$のOLSE$hat{\beta}(F)$の無限標本で評価された影響関数と比較することによって次の特徴をもっていることがわかる．
+
+\begin{enumerate}
+  \item $\hat{\beta}(F)$は残差$Y-x^{'}\hat{\beta}(F)$に対して限界をもたないが，$\hat{\beta_M}(F)$を用いる残差は$\Psi$によって限界をもつ．
+  \item OLSのとき$\Psi^{'}(u)=1$となり，$B=\Sigma_{XX}(F)$となるがM推定においては$\Psi^{'}(u)=0$となる$\Psi$関数がほとんどである．
+  \item もし$x$に限界がなければ，$B^{-1}x$は限界を持たず，$\Psi$関数が大きな残差に限界を与えても$\hat{\beta_M}$のICは限界をもたない．つまりX方向の誤差からの影響にM推定量は頑健でない．
+\end{enumerate}
+
+上記，3への対応としてX方向にも頑健なMM推定を後ほど紹介する．
+
+
 ## M推定量の不偏性と漸近的特性
+
+本節でM推定量の不偏性と漸近的特性について述べる．まず，$\Psi$が奇関数
+
+\begin{align*}
+  \Psi(-u)=-\Psi(u)
+\end{align*}
+
+で，分布$F$が中心$T$の周りで対称ならば
+
+\begin{align*}
+  \sum^{n}_{i=1}\Psi\left(\frac{X_i-T_n}{\sigma}\right)=0
+\end{align*}
+
+の解であるM推定量$T_n$は$T$の不偏推定量である（Goodall(1983 p.364)）．例えばHuberの$\Psi$を用いるM推定量は不偏性をもつ．真の分布が$F$であるときのパラメータ$T(F)$のM推定量$T_n$は
+
+\begin{align*}
+  \sqrt{n}[T_n-T(F)]\overset{d}{\longrightarrow}N[0,V(T,F)] \tag{22}
+\end{align*}
+
+\begin{align*}
+  V(T,F)=\int IC(x;T,F)^{2}dF(x) \tag{23}
+\end{align*}
+
+と漸近的に正規分布をし，その分散$V(T,F)$は影響関数を用いて式(23)のように表すことができる（Huber and Ronchetti(2009) p.47,Hampel et al.(1986) p.85）．回帰モデルのM推定量$\hat{\beta_M}$も漸近的に正規分布する．
+
+\begin{align*}
+  \sqrt{n}[\hat{\beta_M}-\beta]\overset{d}{\longrightarrow}N[0,v\Sigma_{XX}^{-1}] \tag{23}
+\end{align*}
+
+\begin{align*}
+  v&=\sigma^{2}\frac{E[\Psi^{2}(u)]}{\{E[\Psi^{'}(u)]\}^{2}} \\
+  \Sigma_{XX}&=E(xx^{'})
+\end{align*}
+
+である（Yohai and Maronna(1979),Maronna et al.(2006), p.124）．式(23)の分散の推定量は次のようにして求めることができる．
+
+\begin{align*}
+  E[\Psi^{'}(u)]=\frac{1}{n}\sum^{n}_{i=1}\Psi^{'}(\hat{u_i}) \tag{24}
+\end{align*}
+
+\begin{align*}
+  E[\Psi^{2}(u)]=\frac{1}{n}\sum^{n}_{i=1}\Psi^{2}(\hat{u_i}) \tag{25}
+\end{align*}
+
+によって推定すれば
+
+\begin{align*}
+  \hat{v}=\hat{\sigma}^{2}\frac{n[\sum^{n}_{i=1}\Psi^{2}(\hat{u_i})]}{[\sum^{n}_{i=1}\Psi^{'}(\hat{u_i})]^{2}} \tag{26}
+\end{align*}
+
+が$v$の推定量を与える．そして
+
+\begin{align*}
+  \Sigma_{XX}=E(xx^{'})=\frac{1}{n}(X^{'}X)
+\end{align*}
+
+によって推定できるから
+
+\begin{align*}
+  v\Sigma_{XX}^{-1}の推定量=n\hat{v}(X^{'}X)^{-1}
+\end{align*}
+
+となる．従って，$n$が十分大きい時，近似的に
+
+\begin{align*}
+  \hat{\beta_M}\overset{d}{\longrightarrow}N[\beta,\hat{v}(X^{'}X)^{-1}] \tag{27}
+\end{align*}
+
+が成り立つ．$e_i$を基準化して$\hat{u_i}=e_i/\hat{\sigma}$を求めるためにも，$\hat{v}$を求めるためにも，局外パラメータ$\hat{\sigma}$が頑健回帰推定に大きく影響する．$\sigma$の推定量$\hat{\sigma}$をいかにして求めるかが大きな問題である．これについては後ほど述べる．\
+例として，Huberの$\Psi$のM推定量の漸近的分散は次式となる．
+
+\begin{align*}
+  V(T,F)=\frac{E(\Psi^{2})}{[E(\Psi^{'})]^{2}}=\frac{-2H\phi(H)+1-2\Phi(-H)+2H^{2}\Phi(-H)}{[1-2\Phi(-H)]^{2}} \tag{28}
+\end{align*}
+
+標準正規分布の分散は1であるから，真の確率分布が正規分布のときのHuberの$\Psi$によるM推定量$T_n$の漸近的有効性$AE(T_n)$は次式で与えられる．
+
+\begin{align*}
+  AE(T_n)=\frac{[1-2\Phi(-H)]^{2}}{-2H\phi(H)+1-2\Phi(-H)+2H^{2}\Phi(-H)} \tag{29}
+\end{align*}
+
+ここで，H=1.345は$AE(T_n)=0.95$（95%の漸近的有効性）を与える値である．
+
 
 ## 崩壊点
 
@@ -94,3 +508,5 @@ OLSは
 ## 参考文献
 
 ## 付録
+
+### OLSEの影響関数
