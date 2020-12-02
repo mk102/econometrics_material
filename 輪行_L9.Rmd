@@ -1,5 +1,5 @@
 ---
-title: "影響点とその対処法(頑健回帰推定法)"
+title: "影響点と頑健回帰推定法"
 author: "川上 幹男"
 date: "2020/12/04"
 header_includes:
@@ -497,15 +497,174 @@ M推定量の影響関数は$\beta$のOLSE$hat{\beta}(F)$の無限標本で評�
 
 ## 崩壊点
 
+推定量の頑健性を測る際によく用いられる指標が崩壊点(breakdown point)である．以下，BDPとする．\
+$n$個の標本点を
+
+\begin{align*}
+  Z=\{(x^{'}_{1},Y_1),\cdots,(x_{n}^{'},Y_n)\}
+\end{align*}
+
+とし，$Z$から得られる$\beta$の推定量を$\hat{\beta}(Z)$とする．$n$個の観測点のなかで$m$個$(1\leq m\leq n)$の観測点を任意の値にとりかえることによって得られる標本を$Z^{'}$とする．この$m$個の汚染(contamination)によって推定量がどれくらい変化するかは
+
+\begin{align*}
+  \|\hat{\beta}(Z^{'})-\hat{\beta}(Z)\|
+\end{align*}
+
+によって表せる．この外れ値（あるいは高い作用点）によって生じる最大の大きさを$bias(m;\hat{\beta}(Z))$と書くと
+
+\begin{align*}
+  bias(m;\hat{\beta}(Z))=\underset{Z^{'}}{sup}\|\hat{\beta}(Z^{'})-\hat{\beta}(Z)\|
+\end{align*}
+
+となる．上限(supremum)はすべての可能な$Z^{'}$に対してである．もしこの$bias(m;\hat{\beta}(Z))$が無限の大きさになるならば，$m$個の外れ値によって$\hat{\beta}$は推定値として無意味な値へと変化する．つまり推定値は崩壊(breakdown)する．従って標本$Z$における推定量$\hat{\beta}$の有限標本崩壊点は
+
+\begin{align*}
+  \epsilon^{*}_{n}(\hat{\beta}(Z))=min\{\frac{m}{n};bias(m;\hat{\beta}(Z))\longrightarrow\infty\}
+\end{align*}
+
+と定義される．つまり，推定値をどのような値にもすることができる外れ値（あるいは作用点）の最小の割合$m/n$を崩壊点とよぶ．\
+OLSは1個の外れ値によって推定値を無意味な値とするため崩壊点は$1/n$である．$n\rightarrow\infty$のとき$0$となる．このことをOLSの漸近的崩壊点は0%であるという．\
+期待し得る崩壊点の最前の値は50%とされている．なぜなら50%というのはデータの外れ値（もしくは作用点）部分とその他の部分を区別不可能にする比率を意味するからである．
+
 ## 崩壊点と調整定数
+
+崩壊点BDPが何%になるかは，損失関数$\rho$と調整定数の値に依存する．$\rho$が次の2つの条件
+
+\begin{description}
+  \item[(R1)] $\rho$は対称，連続微分可能であり$\rho(0)=0$である．
+  \item[(R2)] $\rho$は$[0,c]$で単調増加，$[c,\infty]$で一定となる$c>0$が存在する．
+\end{description}
+
+を満たし，正規分布のもとでの$\rho$の期待値を$E_{\Phi}(\rho)$とすると
+
+\begin{align*}
+  \frac{E_{\Phi}(\rho)}{\rho(c)}=\lambda
+\end{align*}
+となるように調整定数$c$を選べば，漸近的崩壊点を$100\times \lambda$%とすることができる（Rousseeuw and Yohai (1984)）．
 
 ## $\sigma$の推定
 
+頑健回帰推定において，$\sigma$の推定値によって残差は基準化され，この基準化残差と$\Psi$関数によりウェイトが決まり，ウェイトを用いた加重最小2乗法によって回帰係数が推定される．従って，頑健回帰推定において$\sigma$をいかにして推定するかは極めて重要．$\sigma$をOLSの残差$e_i$を用いて
+
+\begin{align*}
+  s=\left(\frac{\sum e^{2}}{n-k}\right)^{\frac{1}{2}}
+\end{align*}
+
+によって推定することは懸命でない．なぜならば，追加された観測点$z$からの$s^{2}$の無限標本における影響関数は
+
+\begin{align*}
+  IC(z;F,T)=(z-\mu)^{2}-\sigma
+\end{align*}
+
+であるから，$s^{2}$は$z$から限界のない大きな影響を受ける推定量である．従って，$s$自身が外れ値から大きな影響を受けるため，これを使用して基準化するのは望ましくない．
+
+### MAD
+
+回帰モデルからの残差を$e_i$とすると，$\sigma$の頑健推定量として，標本中位数からの絶対偏差の中位数(median absolute deviation from sample median)(MADと略される)は
+
+\begin{align*}
+  s_{0}=\frac{MAD}{0.6745}=\frac{median|e_i-M|}{0.6745} \tag{30}
+\end{align*}
+
+がある．他にも標本中位数からの平均絶対偏差や四分位数間範囲を用いた推定量も提案されているがシミュレーション結果はMADを用いるM推定量の優位を示している（Andrews et al.(1972) p.239）．Holland and Welsch(1977)，Hampel et al.((1986, p.105, p.237))もMADを位置パラメータのM推定値を求めるときの$\sigma$の推定値として推奨している．
+
+### $\sigma$のM推定
+
+$z_1,\cdots,z_n$はcdf$F(z)$からの無作為標本，位置(location)パラメータ$T(F)$の推定量を$T_n$，尺度(scale)パラメータ$s(F)$の推定量を$s_n$とする．$T_n$および$s_n$が次の2本の方程式を満たす時，$T_n$，$s_n$は同時M推定量と呼ばれる．
+
+\begin{align*}
+  \sum_{i=1}^{n}\Psi\left(\frac{z_i-T_n}{cs_n}\right) \tag{31}
+\end{align*}
+
+\begin{align*}
+  \sum_{i=1}^{n}\Chi\left(\frac{z_i-T_n}{cs_n}\right) \tag{32}
+\end{align*}
+
+ここで$\Psi$は奇関数，$\Chi$は偶関数，$c$は調整定数である．このとき
+
+\begin{align*}
+  \sqrt{n}[T_n-T(F)]\overset{d}{\longrightarrow}N(0,A(F,T)) \tag{33}
+\end{align*}
+
+が成り立つ．漸近的分散$A(F,T)$は次式で与えられる（Hoaglin et al.(1983), p.416）．
+
+\begin{align*}
+  A(F,T)=\frac{c^{2}s^{2}(F)E\{\Psi^{2}[\frac{z-T(F)}{cs(F)}]\}}{E\{\Psi^{'}[\frac{z-T(F)}{cs(F)}]\}^{2}} \tag{34}
+\end{align*}
+
+これを回帰モデルの$\epsilon$~$iid(0,\sigma^2)$に適用する．$T(F)$を$T_n=M=\underset{i}{median}(e_i)$で推定し，$s(F)$を$s_n=MAD$で推定し
+
+\begin{align*}
+  u_i=\frac{e_i-M}{cMAD} 
+\end{align*}
+
+とおく．そして
+
+\begin{align*}
+  E[\Psi^{'}(u)]=\frac{1}{n}\sum^{n}_{i=1}\Psi^{'}(u_i)
+\end{align*}
+
+\begin{align*}
+  E[\Psi^{2}(u)]=\frac{1}{n}\sum^{n}_{i=1}\Psi^{2}(u_i)
+\end{align*}
+
+によって推定すると，式(34)の推定量として
+
+\begin{align*}
+  s^{2}_{T}=\frac{n(cMAD)^{2}\sum_{i=1}^{n}\Psi^{2}(u_{i})}{[\sum_{i=1}^{n}\Psi^{'}(u_{i})]^{2}} \tag{35}
+\end{align*}
+
+従って$\sigma$の推定量は
+
+\begin{align*}
+  s_{T}=\frac{\sqrt{n}(cMAD)[\sum_{i=1}^{n}\Psi^{2}(u_{i})]^{\frac{1}{2}}}{|\sum_{i=1}^{n}\Psi^{'}(u_{i})|} \tag{36}
+\end{align*}
+
+となる．
+
 ## MM推定
+
+M推定は，影響関数からも分かるようにY方向（外れ値）には頑健だがX方向（高い作用点）に頑健でないことをこれまでの節で述べた．X方向にも頑健な頑健回帰推定方法として有界影響推定が提案されている．しかし，有界影響推定の問題点として漸近的有効性が低い点が挙げられる．\
+そこで，高いBDPと同時に，誤差項が正規分布するとき高い漸近的有効性をもつ推定法としてMM推定量を説明する．
 
 ## MM推定のアルゴリズム
 
+MM推定では，損失関数$\rho$が「崩壊点と調整定数」節で示した条件(R1)と(R2)を満たしていることが仮定される．MM推定は次の3段階からなる．
+
+### 第1段階
+
+LMS，LTSのような有界影響推定法や調整定数をBDP50%を与える値に設定したS推定を用いてパラメータを推定．（つまり，BDP50%の頑健回帰を行う．
+
+### 第2段階
+
+第1段階の残差$e_i$を用いて，前節で述べた$\sigma$のM推定法を用いて$\sigma$の推定値$\hat{\sigma_M}$を求める．$\rho^{*}=100,000$とする．
+
+
+### 第3段階
+
+第2段階で得られた$\hat{\sigma_M}$の値は固定し，$\Psi$関数の調整定数の値を回帰係数推定量の漸近的有効性95%となる値にして加重最小2乗推定量でパラメータを求める．\
+\begin{itemize}
+  \item $\rho(v_i)<\rho^{*}$ならば，$e_i\leftarrow \text{第3段階での加重最小2乗推定残差}$，$\rho^{*}\leftarrow \text{第3段階での}\rho\text{関数の値}$と置き換え，第3段階の計算ステップへ戻る
+  \item $\rho(v_i)\geq\rho^{*}$ならばストップ
+\end{itemize}
+
+この繰り返し再加重最小2乗によって得られる$\hat{\beta_{MM}}$が$\beta$のMM推定値である．このMM推定量は第1段階のBDP50%の性質を継承するとYohai(1987)は述べている．さらに，第3段階にて漸近的有効性95%を確保して推定を行う．従って，MM推定は高い崩壊点と漸近的有効性を持つ頑健回帰推定法といえる．
+
+## Rによる演習用データの概要
+
+## Rによるクックの距離
+
+## RによるL-Rプロット
+
+## RによるMM推定
+
+## Rによる推定結果可視化
+
+
 ## 参考文献
+
+[1] 蓑谷 千凰彦 (1992) 『計量経済学の新しい展開』多賀出版 \
+[2] 蓑谷 千凰彦 (2016) 『頑健回帰推定』朝倉書店
 
 ## 付録
 
