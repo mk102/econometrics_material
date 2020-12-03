@@ -12,12 +12,6 @@ output:
 documentclass: ltjsarticle
 ---
 
-## 影響分析とは
-
-## クックのD
-
-## L-Rプロット
-
 ## 頑健回帰推定とは
 
 外れ値を検出し，外れ値のパラメータ推定値への影響を小さくしようとする方法．以降で説明する加重回帰で考えると，絶対値のおおきな残差にたいしてはウェイトを小さくすれば良い．次節では，頑健回帰推定の1つであるM推定を例に説明する．
@@ -377,7 +371,7 @@ $z_1,z_2,\cdots,z_n$を分布関数$F$からの無作為標本とし，あるパ
   T(F)=\beta(F)=\Sigma_{XX}^{-1}(F)\Sigma_{XY}(F)
 \end{align*}
 
-であたえられるから，$\beta$のICは次式となる(導出は付録)．
+であたえられるから，$\beta$のICは次式となる．
 
 \begin{align*}
   IC[x^{'},Y;\beta(F)]=\Sigma_{XX}^{-1}(F)x\{Y-x^{'}\beta(F)\} \tag{20}
@@ -650,22 +644,176 @@ LMS，LTSのような有界影響推定法や調整定数をBDP50%を与える�
 
 この繰り返し再加重最小2乗によって得られる$\hat{\beta_{MM}}$が$\beta$のMM推定値である．このMM推定量は第1段階のBDP50%の性質を継承するとYohai(1987)は述べている．さらに，第3段階にて漸近的有効性95%を確保して推定を行う．従って，MM推定は高い崩壊点と漸近的有効性を持つ頑健回帰推定法といえる．
 
+## 影響分析
+
+最後に，回帰係数の影響点を検出する統計量であるクックのDと影響点が外れ値なのか高い作用点なのかを視覚的に確認できるL-Rプロットを説明する．
+
+### クックのD
+
+$\hat{\beta}(i)$を$i$番目のデータを取り除いて推定したパラメータとする．$\hat{\beta}-\hat{\beta}(i)$はベクトルのため全ての$i$で影響力の強さを順序づけすることはできない．そこで$i$番目の観測値の$\hat{\beta}$への影響力を示すクックのDが以下である．
+
+\begin{align*}
+  D_{i}&=\frac{[\hat{\beta}-\hat{\beta}(i)]^{'}(X^{'}X)[\hat{\beta}-\hat{\beta}(i)]/(k+1)}{\sum e^{2}/(n-k-1)} \\
+  &=\frac{[\hat{\beta}-\hat{\beta}(i)]^{'}(X^{'}X)[\hat{\beta}-\hat{\beta}(i)]}{(k+1)s^{2}} \tag{37}
+\end{align*}
+
+$D_i$が0のときにはときには，$i$番目の観測値をパラメータ推定に使わなくても，パラメータ推定値の変化はなく影響力は0と解釈できる．蓑谷(1992)によると，以下の切断点を用いてクックのDによる影響点を検出したほうが良いとされている．
+
+\begin{align*}
+  D_i>\frac{F_{0.05}(1,n-k-2)}{(n-k-2+F_{0.05}(1,n-k-2))}
+\end{align*}
+
+### L-Rプロット
+
+説明変数空間において，$x_i$が中心からどれだけ離れているかは
+
+\begin{align*}
+  h_{ii}=x^{'}_{i}(X^{'}X)^{-1}x_{i}
+\end{align*}
+
+によって現される．さらに
+
+\begin{align*}
+  a_{ii}^{2}=\frac{e_{i}^{2}}{\sum_{i=1}^{n}e_{i}^{2}}
+\end{align*}
+
+とすると，X方向の高い作用点を$h_{ii}$，Y方向の外れ値を$a_{ii}^{2}$により表すことができる．横軸に$a_{ii}^{2}$，縦軸に$h_{ii}$をプロットしたものをL-Rプロットと呼ぶ．L-Rプロットにより，影響点が外れ値なのか高い作用点なのかあるいは両方かを視覚的に判断ができる．
+
 ## Rによる演習用データの概要
+
+今回は，蓑谷(2016)で紹介されている「ベルギーの国際電話呼び出し回数」データを演習に使用する．これはXは1950年から1973年まで，Yはベルギーからの国際電話呼び出し回数（100満開あたり10）を示す．データの入力と散布図は以下となる．
+
+```{r message=FALSE, warning=FALSE}
+# パッケージの読み込み
+library(tidyverse)
+
+# 使用データの入力
+phone_data <- tibble(
+  X = 50:73,
+  Y = c(0.44, 0.47, 0.47, 0.59, 0.66, 0.73, 0.81, 0.88,
+        1.06, 1.20, 1.35, 1.49, 1.61, 2.12, 11.90, 12.40,
+        14.20, 15.90, 18.20, 21.20, 4.30, 2.40, 2.70, 2.90)
+)
+
+# データの散布図プロット
+phone_data %>% 
+  ggplot(aes(x=X, y=Y, group=1)) +
+  # 散布図描画
+  geom_point() +
+  # ラベル追加
+  geom_text(aes(y=Y + .15, label=X), size = 4, vjust=0)
+```
+
+散布図より，1964年から1969年までの6個のYの値は，この6年以外の年とかなり乖離している．蓑谷(2016)では，実際この6年は記録システムの相違によって他の年とは異質なデータと述べられている．
 
 ## Rによるクックの距離
 
+ベルギーの国際電話呼び出し回数データを用いて，クックの距離を算出する．クックの距離はcooks.distance関数で算出できる．
+
+```{r message=FALSE, warning=FALSE}
+# パッケージの読み込み
+library(car)
+
+# 単回帰モデルの作成
+ols_phone <- lm(Y~X, data = phone_data)
+summary(ols_phone)
+
+# OLS結果のプロット
+phone_data %>% 
+  ggplot(aes(x=X, y=Y, group=1)) +
+  # 散布図描画
+  geom_point() +
+  # ラベル追加
+  geom_text(aes(y=Y + .15, label=X), size = 4, vjust=0) +
+  geom_line(aes(x=X, y=(-26.0059+0.5041*X), group=1))
+
+# Cook's Distanceの算出
+cd <- tibble(
+  X = 50:73,
+  Cookd = cooks.distance(ols_phone)
+)
+
+# 棒グラフによるCook's Distanceの可視化
+cd %>% 
+  ggplot(aes(x=X, y=Cookd, group=1)) +
+  geom_bar(stat = "identity")
+```
+
 ## RによるL-Rプロット
+
+次にL-Rプロットを描画する．
+
+```{r message=FALSE, warning=FALSE}
+# ハット行列の対角要素
+h <- hatvalues(ols_phone)
+# 残差
+a_2 <- (ols_phone$residuals)^2 / sum((ols_phone$residuals)^2)
+
+# L-Rプロット
+lr_df <- tibble(
+  h = h,
+  a_2 = a_2,
+)
+
+lr_df %>% 
+  ggplot(aes(x=a_2, y=h)) +
+  geom_point() +
+  geom_text(aes(y=h + .005, label=50:73), size = 4, vjust=0)
+```
+
+1969年が最もY方向の影響点であることが分かる．
 
 ## RによるMM推定
 
+RによるMM推定を行う．MM推定およびM推定は\{MASS\}パッケージのrlm関数で実行が可能である．
+
+```{r message=FALSE, warning=FALSE}
+# パッケージ読み込み
+library(MASS)
+
+MM_phone <- rlm(Y~X, data = phone_data,
+                method = "MM",
+                scale.est = c("MAD", "Huber", "proposal 2"),
+                psi = psi.huber,
+                k = 1.345)
+summary(MM_phone)
+```
+
+rlm関数の引数に関して追記する．method引数は，推定法を文字列で与える．scale.est引数は，$\sigma$の推定法を与える（上記はデフォルト設定）．psi引数は，$\Psi$関数を与える（デフォルトはHuber）．k引数は，$\Psi$関数の調整定数を与える（デフォルトの1.345はHuberの$\Psi$で漸近的有効性95%を与える値）．\
+
 ## Rによる推定結果可視化
 
+前節のMM推定結果をOLS結果に重ねて表示する．
+
+```{r}
+phone_data %>% 
+  ggplot(aes(x=X, y=Y, group=1)) +
+  # 散布図描画
+  geom_point() +
+  # ラベル追加
+  geom_text(aes(y=Y + .15, label=X), size = 4, vjust=0) +
+  geom_abline(intercept = -26.0059, slope = 0.5041, color = "black") +
+  geom_abline(intercept = -5.2423, slope = 0.1101, color = "red")
+```
+
+上図，赤線がMM推定の結果である．散布図から1964年から1969年のデータ記録方式が異なる年度の影響を軽減して回帰係数が求まっていることが分かる．\
+
+ウェイトでもこれを確認する．
+
+```{r}
+weight_MM <- tibble(
+  X = phone_data$X,
+  Y = MM_phone$w
+)
+
+weight_MM %>% 
+  ggplot(aes(x=X, y=Y)) +
+  geom_bar(stat = "identity")
+```
+
+MM推定による各データへのウェイトを見ても，1964年から1970年のウェイトは0として加重最小2乗法を行なっていることが分かる．
 
 ## 参考文献
 
 [1] 蓑谷 千凰彦 (1992) 『計量経済学の新しい展開』多賀出版 \
 [2] 蓑谷 千凰彦 (2016) 『頑健回帰推定』朝倉書店
-
-## 付録
-
-### OLSEの影響関数
